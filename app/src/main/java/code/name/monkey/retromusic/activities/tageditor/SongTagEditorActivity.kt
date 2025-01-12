@@ -134,7 +134,6 @@ class SongTagEditorActivity : AbsTagEditorActivity<ActivitySongTagEditorBinding>
 
     override fun setColors(color: Int) {
         super.setColors(color)
-        saveFab.backgroundTintList = ColorStateList.valueOf(color)
         ColorStateList.valueOf(
             MaterialValueHelper.getPrimaryTextColor(
                 this,
