@@ -37,10 +37,6 @@ class RetroWebServer(val context: Context) : NanoHTTPD(findAndInitializePort()) 
         }
     }
 
-    init {
-        CastServerUtils.init(context)
-    }
-
     override fun start() {
         try {
             super.start()
