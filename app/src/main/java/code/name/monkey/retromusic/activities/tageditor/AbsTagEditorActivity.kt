@@ -17,8 +17,10 @@ package code.name.monkey.retromusic.activities.tageditor
 import android.app.Activity
 import android.app.SearchManager
 import android.content.Intent
+import android.content.res.ColorStateList
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
@@ -350,6 +352,7 @@ abstract class AbsTagEditorActivity<VB : ViewBinding> : AbsBaseActivity() {
 
     protected open fun setColors(color: Int) {
         paletteColorPrimary = color
+        saveFab.backgroundTintList = ColorStateList.valueOf(if (color == 0) Color.GRAY else color)
     }
 
     protected fun writeValuesToFiles(
