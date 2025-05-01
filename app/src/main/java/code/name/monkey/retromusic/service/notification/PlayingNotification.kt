@@ -33,6 +33,8 @@ abstract class PlayingNotification(context: Context) :
 
     abstract fun updateFavorite(isFavorite: Boolean)
 
+    abstract fun clear(context: Context)
+
     companion object {
         const val NOTIFICATION_CONTROLS_SIZE_MULTIPLIER = 1.0f
         internal const val NOTIFICATION_CHANNEL_ID = "playing_notification"

@@ -864,6 +864,8 @@ class MusicService : MediaBrowserServiceCompat(),
         isForeground = false
         notificationManager?.cancel(PlayingNotification.NOTIFICATION_ID)
 
+        playingNotification?.clear(this)
+
         stopSelf()
     }
 
@@ -1120,15 +1122,16 @@ class MusicService : MediaBrowserServiceCompat(),
             }
 
             META_CHANGED -> {
-                playingNotification?.updateMetadata(currentSong) { startForegroundOrNotify() }
-                isCurrentFavorite { isFavorite ->
-                    playingNotification?.updateFavorite(isFavorite)
-                    startForegroundOrNotify()
-                }
-
                 // We must call updateMediaSessionPlaybackState after the load of album art is completed
                 // if we are loading it or it won't be updated in the notification
-                updateMediaSessionMetaData(::updateMediaSessionPlaybackState)
+                updateMediaSessionMetaData {
+                    updateMediaSessionPlaybackState()
+                    playingNotification?.updateMetadata(currentSong) { startForegroundOrNotify() }
+                    isCurrentFavorite { isFavorite ->
+                        playingNotification?.updateFavorite(isFavorite)
+                        startForegroundOrNotify()
+                    }
+                }
                 savePosition()
                 savePositionInTrack()
                 serviceScope.launch(IO) {

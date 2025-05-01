@@ -18,6 +18,7 @@ import android.annotation.SuppressLint
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.ComponentName
+import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -47,6 +48,8 @@ class PlayingNotificationImpl24(
     val context: MusicService,
     mediaSessionToken: MediaSessionCompat.Token,
 ) : PlayingNotification(context) {
+
+    private var currentTarget: CustomTarget<Bitmap>? = null
 
     init {
         val action = Intent(context, MainActivity::class.java)
@@ -115,9 +118,17 @@ class PlayingNotificationImpl24(
         setContentTitle(song.title)
         setContentText(song.artistName)
         setSubText(song.albumName)
+
+        // Displays a temporary image while Glide loads the actual album image.
+        // This allows us to update the notification immediately
+        // without waiting for Glide.
+        setAlbumArtImage(null)
+        onUpdate()
+
         val bigNotificationImageSize = context.resources
             .getDimensionPixelSize(R.dimen.notification_big_image_size)
-        Glide.with(context)
+        currentTarget?.let { Glide.with(context).clear(it) }
+        currentTarget = Glide.with(context)
             .asBitmap()
             .songCoverOptions(song)
             .load(RetroGlideExtension.getSongModel(song))
@@ -134,25 +145,23 @@ class PlayingNotificationImpl24(
 
                 override fun onLoadFailed(errorDrawable: Drawable?) {
                     super.onLoadFailed(errorDrawable)
-                    setLargeIcon(
-                        BitmapFactory.decodeResource(
-                            context.resources,
-                            R.drawable.default_audio_art
-                        )
-                    )
+                    setAlbumArtImage(null)
                     onUpdate()
                 }
 
                 override fun onLoadCleared(placeholder: Drawable?) {
-                    setLargeIcon(
-                        BitmapFactory.decodeResource(
-                            context.resources,
-                            R.drawable.default_audio_art
-                        )
-                    )
+                    setAlbumArtImage(null)
                     onUpdate()
                 }
             })
+    }
+
+    private fun setAlbumArtImage(image: Bitmap?) {
+        if (image == null) {
+            setLargeIcon(BitmapFactory.decodeResource(context.resources, R.drawable.default_audio_art))
+        } else {
+            setLargeIcon(image)
+        }
     }
 
     private fun buildPlayAction(isPlaying: Boolean): NotificationCompat.Action {
@@ -181,6 +190,10 @@ class PlayingNotificationImpl24(
 
     override fun updateFavorite(isFavorite: Boolean) {
         mActions[0] = buildFavoriteAction(isFavorite)
+    }
+
+    override fun clear(context: Context) {
+        Glide.with(context).clear(currentTarget)
     }
 
     private fun retrievePlaybackAction(action: String): PendingIntent {
