@@ -268,6 +268,8 @@ class PlayingNotificationClassic(
 
     override fun updateFavorite(isFavorite: Boolean) {}
 
+    override fun clear(context: Context) {}
+
     private fun buildPendingIntent(
         context: Context, action: String,
         serviceName: ComponentName?,
