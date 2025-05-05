@@ -12,6 +12,12 @@
     "image": "pratham.jpg"
   },
   {
+    "name": "Thomas Möller",
+    "summary": "Developer",
+    "link": "https://github.com/tomaThomas",
+    "image": "tomaThomas.png"
+  },
+  {
     "name": "Daksh P. Jain",
     "summary": "Website & GitHub Maintainer",
     "link": "https://daksh.eu.org",
