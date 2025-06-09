@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.media.AudioManager
-import android.media.MediaPlayer
 import androidx.annotation.CallSuper
 import androidx.core.content.ContextCompat
 import androidx.core.content.getSystemService
@@ -34,10 +33,10 @@ abstract class AudioManagerPlayback(val context: Context) : Playback {
 
             AudioManager.AUDIOFOCUS_LOSS -> {
                 // Lost focus for an unbounded amount of time: stop playback and release media playback
-//                if (!isAudioFocusEnabled) {
-//                    pause()
-//                    callbacks?.onPlayStateChanged()
-//                }
+                if (!isAudioFocusEnabled) {
+                    pause()
+                    callbacks?.onPlayStateChanged()
+                }
             }
 
             AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> {

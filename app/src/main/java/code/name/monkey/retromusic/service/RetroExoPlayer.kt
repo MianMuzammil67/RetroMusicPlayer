@@ -55,7 +55,7 @@ class RetroExoPlayer(context: Context) : AudioManagerPlayback(context), Player.L
                         .setUsage(C.USAGE_MEDIA)
                         .setContentType(C.AUDIO_CONTENT_TYPE_MUSIC)
                         .build(),
-                    true
+                    false
                 )
                 player.playbackParameters = PlaybackParameters(playbackSpeed, playbackPitch)
 
