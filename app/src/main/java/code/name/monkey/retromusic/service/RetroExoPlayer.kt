@@ -215,6 +215,8 @@ class RetroExoPlayer(context: Context) : AudioManagerPlayback(context), Player.L
     override fun onPlaybackStateChanged(state: Int) {
         if (state == Player.STATE_ENDED) {
             callbacks?.onTrackEnded()
+        } else {
+            callbacks?.onPlayStateChanged()
         }
     }
 
