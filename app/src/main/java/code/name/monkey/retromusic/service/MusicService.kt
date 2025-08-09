@@ -706,13 +706,15 @@ class MusicService : MediaBrowserServiceCompat(),
         acquireWakeLock()
         // if there is a timer finished, don't continue
         if (pendingQuit
-            || repeatMode == REPEAT_MODE_NONE && isLastTrack
+            || (repeatMode == REPEAT_MODE_NONE && isLastTrack)
         ) {
-            notifyChange(PLAY_STATE_CHANGED)
+            quit()
             seek(0, false)
             if (pendingQuit) {
                 pendingQuit = false
-                quit()
+            } else if (repeatMode == REPEAT_MODE_NONE && isLastTrack) {
+                position = 0
+                notifyChange(QUEUE_CHANGED)
             }
         } else {
             playNextSong(false)
