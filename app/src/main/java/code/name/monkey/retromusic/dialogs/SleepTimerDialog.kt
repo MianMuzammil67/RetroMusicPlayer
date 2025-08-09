@@ -100,24 +100,22 @@ class SleepTimerDialog : DialogFragment() {
                 setNegativeButton(R.string.action_cancel) { _, _ ->
                     timerUpdater.cancel()
                     val previous = makeTimerPendingIntent(PendingIntent.FLAG_NO_CREATE)
-                    if (previous != null) {
-                        val am = requireContext().getSystemService<AlarmManager>()
-                        am?.cancel(previous)
-                        previous.cancel()
+                    val am = requireContext().getSystemService<AlarmManager>()
+                    am?.cancel(previous)
+                    previous.cancel()
+                    Toast.makeText(
+                        requireContext(),
+                        requireContext().resources.getString(R.string.sleep_timer_canceled),
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    val musicService = MusicPlayerRemote.musicService
+                    if (musicService != null && musicService.pendingQuit) {
+                        musicService.pendingQuit = false
                         Toast.makeText(
                             requireContext(),
                             requireContext().resources.getString(R.string.sleep_timer_canceled),
                             Toast.LENGTH_SHORT
                         ).show()
-                        val musicService = MusicPlayerRemote.musicService
-                        if (musicService != null && musicService.pendingQuit) {
-                            musicService.pendingQuit = false
-                            Toast.makeText(
-                                requireContext(),
-                                requireContext().resources.getString(R.string.sleep_timer_canceled),
-                                Toast.LENGTH_SHORT
-                            ).show()
-                        }
                     }
                 }
             } else {
@@ -132,6 +130,7 @@ class SleepTimerDialog : DialogFragment() {
                     PreferenceUtil.nextSleepTimerElapsedRealTime = nextSleepTimerElapsedTime.toInt()
                     val am = requireContext().getSystemService<AlarmManager>()
 
+                    @Suppress("KotlinConstantConditions")
                     if (VersionUtils.hasS() && am?.canScheduleExactAlarms() != true) {
                         Toast.makeText(
                             requireContext(),
