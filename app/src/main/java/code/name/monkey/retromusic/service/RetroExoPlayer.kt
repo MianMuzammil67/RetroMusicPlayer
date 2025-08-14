@@ -132,7 +132,7 @@ class RetroExoPlayer(context: Context) : AudioManagerPlayback(context), Player.L
      * Checks whether the MultiPlayer is playing.
      */
     override val isPlaying: Boolean
-        get() = isInitialized && player.isPlaying
+        get() = isInitialized && (player.isPlaying || player.playbackState == Player.STATE_ENDED)
 
     /**
      * Gets the duration of the file.
