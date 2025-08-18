@@ -4,7 +4,6 @@ import android.content.res.ColorStateList
 import android.graphics.Color
 import android.os.Bundle
 import android.view.MenuItem
-import androidx.lifecycle.lifecycleScope
 import code.name.monkey.appthemehelper.util.MaterialUtil
 import code.name.monkey.retromusic.App
 import code.name.monkey.retromusic.R
@@ -15,7 +14,8 @@ import code.name.monkey.retromusic.extensions.accentColor
 import code.name.monkey.retromusic.extensions.setLightStatusBar
 import code.name.monkey.retromusic.extensions.setStatusBarColor
 import code.name.monkey.retromusic.extensions.showToast
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 class PurchaseActivity : AbsThemeActivity() {
@@ -36,12 +36,8 @@ class PurchaseActivity : AbsThemeActivity() {
         binding.purchaseButton.isEnabled = false
 
         billingManager = BillingManager(this)
-        
-        // Use billing setup callback instead of arbitrary delay
-        // This addresses the review feedback: "Can't we use this callback to enable buttons?"
-        billingManager.billingSetupListener = object : BillingManager.BillingSetupListener {
-            override fun onBillingSetupFinished() {
-                // Enable buttons only when billing client is ready
+        billingManager.startConnection {
+            CoroutineScope(Dispatchers.Main).launch {
                 binding.restoreButton.isEnabled = true
                 binding.purchaseButton.isEnabled = true
             }
@@ -60,10 +56,7 @@ class PurchaseActivity : AbsThemeActivity() {
     }
 
     private fun restorePurchase() {
-        billingManager.restorePurchases()
-        
-        lifecycleScope.launch {
-            delay(2000) // Wait for restore operation
+        billingManager.restorePurchases {
             if (App.isProVersion()) {
                 showToast(R.string.restored_previous_purchase_please_restart)
                 setResult(RESULT_OK)
@@ -83,9 +76,5 @@ class PurchaseActivity : AbsThemeActivity() {
     override fun onDestroy() {
         billingManager.release()
         super.onDestroy()
-    }
-
-    companion object {
-        private const val TAG: String = "PurchaseActivity"
     }
 }
