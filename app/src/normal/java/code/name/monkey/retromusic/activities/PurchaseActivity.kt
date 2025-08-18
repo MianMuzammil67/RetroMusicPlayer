@@ -32,16 +32,7 @@ class PurchaseActivity : AbsThemeActivity() {
         binding.toolbar.navigationIcon?.setTint(Color.WHITE)
         binding.toolbar.setNavigationOnClickListener { onBackPressedDispatcher.onBackPressed() }
 
-        binding.restoreButton.isEnabled = false
-        binding.purchaseButton.isEnabled = false
-
-        billingManager = BillingManager(this)
-        billingManager.startConnection {
-            CoroutineScope(Dispatchers.Main).launch {
-                binding.restoreButton.isEnabled = true
-                binding.purchaseButton.isEnabled = true
-            }
-        }
+        billingManager = App.getContext().billingManager
 
         MaterialUtil.setTint(binding.purchaseButton, true)
 

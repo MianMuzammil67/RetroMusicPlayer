@@ -43,6 +43,10 @@ class BillingManager(private val context: Context) : PurchasesUpdatedListener {
         )
         .build()
 
+    init {
+        startConnection {}
+    }
+
     override fun onPurchasesUpdated(
         billingResult: BillingResult,
         purchases: List<Purchase?>?
