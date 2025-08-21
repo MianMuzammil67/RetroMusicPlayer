@@ -566,4 +566,8 @@
     <string name="your_account_data_is_only_used_for_authentication">Vos données de compte sont utilisées uniquement pour vous authentifier.</string>
     <string name="could_not_write_tags_to_file">Impossible d\'ajouter l\'étiquette au fichier!</string>
     <string name="sleep_timer_no_permission">Aucune permission pour programmer des alarmes, veuillez autoriser Retro Music.</string>
+    <string name="scanning_folders_files">Numérisation de dossiers et de fichiers…</string>
+    <string name="scan_complete">Analyse terminée : %1$d éléments multimédias trouvés.</string>
+    <string name="pref_save_last_directory_summary">Lors du passage à la vue des dossiers, restaurer le dernier répertoire utilisé</string>
+    <string name="pref_save_last_directory_title">Enregistrer le dernier répertoire</string>
 </resources>
