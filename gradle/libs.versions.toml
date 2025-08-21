@@ -18,7 +18,7 @@ koinAndroid = "3.5.6"
 kotlinGradlePlugin = "2.1.21"
 
 kotlinxCoroutinesAndroid = "1.10.2"
-android_tab_library_version = "2.2.0"
+google_play_billing_version = "7.0.0"
 fast_scroll_libraryVersion = "1.2.0"
 lifecycle_version = "2.9.1"
 okhttp3_loggingInterceptor_version = "5.0.0-alpha.16"
@@ -64,6 +64,7 @@ androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref =
 google-feature-delivery = { module = "com.google.android.play:feature-delivery", version.ref = "google_featureDelivery_version" }
 google-play-services-cast-framework = { module = "com.google.android.gms:play-services-cast-framework", version.ref = "playServicesCastFramework" }
 google-play-review = { module = "com.google.android.play:review", version.ref = "google_play_review_version" }
+google-play-billing = { module = "com.android.billingclient:billing", version.ref = "google_play_billing_version" }
 
 #glide
 glide = { module = "com.github.bumptech.glide:glide", version.ref = "glide_version" }
@@ -98,7 +99,6 @@ jetradarmobile-android-snowfall = { module = "com.github.jetradarmobile:android-
 chrisbanes-insetter = { module = "dev.chrisbanes.insetter:insetter", version.ref = "chrisbanes_insetter_version" }
 org-eclipse-egit-github-core = { module = "org.eclipse.mylyn.github:org.eclipse.egit.github.core", version.ref = "orgEclipseEgitGithubCore" }
 jaudiotagger = { module = "com.github.Adonai:jaudiotagger", version.ref = "jaudiotagger" }
-android-lab-library = { module = "com.anjlab.android.iab.v3:library", version.ref = "android_tab_library_version" }
 slidableactivity = { module = "com.r0adkll:slidableactivity", version.ref = "slidableactivity" }
 material-intro = { module = "com.heinrichreimersoftware:material-intro", version.ref = "materialIntro" }
 dhaval2404-imagepicker = { module = "com.github.dhaval2404:imagepicker", version.ref = "dhaval2404_imagepicker_version" }
