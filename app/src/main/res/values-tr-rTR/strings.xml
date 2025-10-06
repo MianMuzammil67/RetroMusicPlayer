@@ -279,8 +279,6 @@
     <string name="not_recently_played">Yakın zamanda oynatılmadı</string>
     <string name="nothing_to_scan">Aranacak herhangi bir şey yok.</string>
     <string name="nothing_to_see">Hiçbir şey yok</string>
-    <string name="notification">Bildirim</string>
-    <string name="notification_settings_summary">Bildirim stilini özelleştirin</string>
     <string name="now_playing">Şimdi oynatılıyor</string>
     <string name="now_playing_queue">Şimdi çalınıyor kuyruğu</string>
     <string name="now_playing_summary">Şimdi oynatılıyor ekranını özelleştirin</string>
@@ -345,7 +343,6 @@
     <string name="pref_summary_bluetooth_playback">Bluetooth cihazına bağlanır bağlanmaz çalmaya başla</string>
     <string name="pref_summary_blurred_album_art">Albüm kapağını kilit ekranında bulanıklaştır. Üçüncü taraf uygulamalar ve widget\'lar ile sorunlara neden olabilir</string>
     <string name="pref_summary_carousel_effect">Çalmakta olan ekranda albüm resmi için atlıkarınca efekti. Kart ve Bulanıklaştırma Kartı temalarının çalışmayacağını unutmayın</string>
-    <string name="pref_summary_classic_notification">Klasik bildirim tasarımını kullanın</string>
     <string name="pref_summary_colored_app">Arka plan ve kontrol düğmesinin renkleri, çalmakta olan ekranda albüm resmine göre değişir</string>
     <string name="pref_summary_colored_app_shortcuts">Vurgu rengindeki uygulama kısayollarını renklendirir. Lütfen rengi her değiştirdiğinizde, etkili olması için bu düğmeyi değiştirin.</string>
     <string name="pref_summary_colored_notification">"Alb\u00fcm kapa\u011f\u0131n\u0131n canl\u0131 rengindeki bildirimi renklendirir"</string>
@@ -386,7 +383,6 @@
     <string name="pref_title_bluetooth_playback">Bluetooth ile oynatma</string>
     <string name="pref_title_blurred_album_art">Albüm kapağını bulanıklaştır</string>
     <string name="pref_title_circle_button">Dairesel oynatma düğmesi</string>
-    <string name="pref_title_classic_notification">Klasik bildirim tasarımı</string>
     <string name="pref_title_colored_app">Adaptif renk</string>
     <string name="pref_title_colored_notification">Renkli bildirim</string>
     <string name="pref_title_cross_fade">Çapraz geçiş (Beta)</string>

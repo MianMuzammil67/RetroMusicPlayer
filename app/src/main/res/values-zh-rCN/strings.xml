@@ -277,8 +277,6 @@
     <string name="not_recently_played">最近未播放歌曲</string>
     <string name="nothing_to_scan">无可检索。</string>
     <string name="nothing_to_see">空空如也</string>
-    <string name="notification">通知</string>
-    <string name="notification_settings_summary">自定义通知样式</string>
     <string name="now_playing">正在播放</string>
     <string name="now_playing_queue">正在播放队列</string>
     <string name="now_playing_summary">定制播放界面</string>
@@ -344,7 +342,6 @@
     <string name="pref_summary_blurred_album_art">模糊化显示锁屏上的专辑封面。可能与第三方应用或微件产生冲突。</string>
     <string name="pref_summary_carousel_effect">在播放页为专辑图片使用轮播效果。
 使用时卡片和模糊卡片主题不会生效。</string>
-    <string name="pref_summary_classic_notification">使用经典通知样式</string>
     <string name="pref_summary_colored_app">背景及控件颜色跟随专辑封面变化</string>
     <string name="pref_summary_colored_app_shortcuts">将快捷方式颜色更改为强调色，每次颜色更改后需要切换一下该设置才能生效</string>
     <string name="pref_summary_colored_notification">"将通知颜色设为专辑封面的强调色"</string>
@@ -385,7 +382,6 @@
     <string name="pref_title_bluetooth_playback">蓝牙播放</string>
     <string name="pref_title_blurred_album_art">模糊专辑封面</string>
     <string name="pref_title_circle_button">圆形播放按钮</string>
-    <string name="pref_title_classic_notification">经典通知样式</string>
     <string name="pref_title_colored_app">自适应颜色</string>
     <string name="pref_title_colored_notification">着色通知</string>
     <string name="pref_title_cross_fade">淡入淡出（测试）</string>
@@ -449,7 +445,7 @@
     <string name="restored_previous_purchase_please_restart">恢复以前的购买。请重新启动应用以使用所有功能。</string>
     <string name="restored_previous_purchases">恢复之前的购买。</string>
     <string name="restoring_purchase">正在恢复购买…</string>
-    <string name="billing_error">An error occurred while communicating with Google Play Billing</string>
+    <string name="billing_error">与 Google Play 结算服务通信时出错</string>
     <string name="retro_music_player">Retro Music 播放器</string>
     <string name="retro_music_pro">Retro Music 高级版</string>
     <string name="ringtone_summary">应用需要系统设置访问权限，才能将音乐设置为为铃声</string>
@@ -566,8 +562,8 @@
     <string name="your_account_data_is_only_used_for_authentication">您的账户数据仅用于验证。</string>
     <string name="could_not_write_tags_to_file">无法将标签写入音乐文件！</string>
     <string name="sleep_timer_no_permission">无权限设定闹钟，请允许 Retro Music 执行</string>
-    <string name="scanning_folders_files">Scanning folders and files…</string>
-    <string name="scan_complete">Scan complete: %1$d media items found.</string>
-    <string name="pref_save_last_directory_summary">When switching to folder view, restore last used directory</string>
-    <string name="pref_save_last_directory_title">Save Last Directory</string>
+    <string name="scanning_folders_files">正在扫描文件夹和文件…</string>
+    <string name="scan_complete">扫描完成：找到 %1$d 个媒体项目。</string>
+    <string name="pref_save_last_directory_summary">切换到文件夹视图时恢复上次使用的目录</string>
+    <string name="pref_save_last_directory_title">保存上次目录</string>
 </resources>

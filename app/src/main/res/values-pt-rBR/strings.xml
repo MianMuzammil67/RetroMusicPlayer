@@ -279,8 +279,6 @@
     <string name="not_recently_played">Não reproduzido recentemente</string>
     <string name="nothing_to_scan">Nada para escanear.</string>
     <string name="nothing_to_see">Nada para ver</string>
-    <string name="notification">Notificação</string>
-    <string name="notification_settings_summary">Personalizar o estilo de notificação</string>
     <string name="now_playing">Tela de Reprodução</string>
     <string name="now_playing_queue">Fila de reprodução atual</string>
     <string name="now_playing_summary">Personalizar a tela de reprodução</string>
@@ -345,7 +343,6 @@
     <string name="pref_summary_bluetooth_playback">Começar a tocar assim que se conectar a um dispositivo Bluetooth</string>
     <string name="pref_summary_blurred_album_art">Desfoque a capa do álbum na tela de bloqueio. Pode causar problemas com aplicativos e widgets de terceiros</string>
     <string name="pref_summary_carousel_effect">Efeito carrossel para a imagem do álbum na tela de reprodução. Note que os temas \"Cartão\" e \"Cartão Desfocado\" não irão funcionar</string>
-    <string name="pref_summary_classic_notification">Usar o design de notificação clássico</string>
     <string name="pref_summary_colored_app">As cores de fundo e do botão de controle mudam de acordo com a capa do álbum na tela de reprodução</string>
     <string name="pref_summary_colored_app_shortcuts">Colore os atalhos do aplicativo na cor de destaque. Toda vez que você mudar a cor alterne essa opção para ter efeito</string>
     <string name="pref_summary_colored_notification">"Colore a notificação com a cor da capa do álbum"</string>
@@ -386,7 +383,6 @@
     <string name="pref_title_bluetooth_playback">Reprodução bluetooth</string>
     <string name="pref_title_blurred_album_art">Desfocar a capa do álbum</string>
     <string name="pref_title_circle_button">Botão de reprodução circular</string>
-    <string name="pref_title_classic_notification">Design de notificação clássico</string>
     <string name="pref_title_colored_app">Cor adaptável</string>
     <string name="pref_title_colored_notification">Notificações coloridas</string>
     <string name="pref_title_cross_fade">Crossfade (Beta)</string>
