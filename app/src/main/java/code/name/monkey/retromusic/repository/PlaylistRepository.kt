@@ -97,7 +97,8 @@ class RealPlaylistRepository(
             } while (cursor.moveToNext())
         }
         cursor?.close()
-        return playlists
+        val collator = java.text.Collator.getInstance()
+        return playlists.sortedWith { p1, p2 -> collator.compare(p1.name, p2.name) }
     }
 
     override fun favoritePlaylist(playlistName: String): List<Playlist> {
