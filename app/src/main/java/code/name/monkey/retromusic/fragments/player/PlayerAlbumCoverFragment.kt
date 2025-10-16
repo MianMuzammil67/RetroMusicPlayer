@@ -79,12 +79,17 @@ class PlayerAlbumCoverFragment : AbsMusicServiceFragment(), ViewPager.OnPageChan
     }
 
     private fun updatePlayingQueue() {
-        viewPager.apply {
-            adapter = AlbumCoverPagerAdapter(childFragmentManager, MusicPlayerRemote.playingQueue)
-            viewPager.adapter!!.notifyDataSetChanged()
-            viewPager.currentItem = MusicPlayerRemote.position
-            onPageSelected(MusicPlayerRemote.position)
+        val adapter = binding.viewPager.adapter
+        if (adapter is AlbumCoverPagerAdapter) {
+            adapter.updateData(MusicPlayerRemote.playingQueue)
+        } else {
+            binding.viewPager.adapter = AlbumCoverPagerAdapter(
+                parentFragmentManager,
+                MusicPlayerRemote.playingQueue
+            )
         }
+        binding.viewPager.setCurrentItem(MusicPlayerRemote.position, true)
+        onPageSelected(MusicPlayerRemote.position)
     }
 
     override fun onPageScrolled(position: Int, positionOffset: Float, positionOffsetPixels: Int) {
