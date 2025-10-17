@@ -1,85 +1,94 @@
+/*
+ * Copyright (c) 2020 Hemanth Savarla.
+ *
+ * Licensed under the GNU General Public License v3
+ *
+ * This is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU General Public License for more details.
+ *
+ */
 package code.name.monkey.retromusic.fragments.player.blur
 
 import android.graphics.Color
-import android.graphics.PorterDuff
 import android.os.Bundle
-import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
-import android.view.animation.AccelerateInterpolator
 import android.view.animation.DecelerateInterpolator
+import android.widget.ImageButton
+import android.widget.TextView
 import androidx.core.content.ContextCompat
 import code.name.monkey.appthemehelper.util.ColorUtil
 import code.name.monkey.appthemehelper.util.MaterialValueHelper
 import code.name.monkey.appthemehelper.util.TintHelper
 import code.name.monkey.retromusic.R
+import code.name.monkey.retromusic.databinding.FragmentBlurPlayerPlaybackControlsBinding
+import code.name.monkey.retromusic.extensions.applyColor
+import code.name.monkey.retromusic.extensions.getSongInfo
 import code.name.monkey.retromusic.extensions.hide
 import code.name.monkey.retromusic.extensions.show
 import code.name.monkey.retromusic.fragments.base.AbsPlayerControlsFragment
+import code.name.monkey.retromusic.fragments.base.goToAlbum
+import code.name.monkey.retromusic.fragments.base.goToArtist
 import code.name.monkey.retromusic.helper.MusicPlayerRemote
-import code.name.monkey.retromusic.helper.MusicProgressViewUpdateHelper
-import code.name.monkey.retromusic.helper.PlayPauseButtonOnClickHandler
-import code.name.monkey.retromusic.service.MusicService
-import code.name.monkey.retromusic.util.MusicUtil
 import code.name.monkey.retromusic.util.PreferenceUtil
-import kotlinx.android.synthetic.main.fragment_blur_player_playback_controls.*
+import code.name.monkey.retromusic.util.color.MediaNotificationProcessor
+import com.google.android.material.slider.Slider
 
-class BlurPlaybackControlsFragment : AbsPlayerControlsFragment() {
+class BlurPlaybackControlsFragment :
+    AbsPlayerControlsFragment(R.layout.fragment_blur_player_playback_controls) {
+    private var _binding: FragmentBlurPlayerPlaybackControlsBinding? = null
+    private val binding get() = _binding!!
 
-    private var lastPlaybackControlsColor: Int = 0
-    private var lastDisabledPlaybackControlsColor: Int = 0
-    private var progressViewUpdateHelper: MusicProgressViewUpdateHelper? = null
+    override val progressSlider: Slider
+        get() = binding.progressSlider
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        progressViewUpdateHelper = MusicProgressViewUpdateHelper(this)
-    }
+    override val shuffleButton: ImageButton
+        get() = binding.shuffleButton
 
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View? {
-        return inflater.inflate(R.layout.fragment_blur_player_playback_controls, container, false)
-    }
+    override val repeatButton: ImageButton
+        get() = binding.repeatButton
+
+    override val nextButton: ImageButton
+        get() = binding.nextButton
+
+    override val previousButton: ImageButton
+        get() = binding.previousButton
+
+    override val songTotalTime: TextView
+        get() = binding.songTotalTime
+
+    override val songCurrentProgress: TextView
+        get() = binding.songCurrentProgress
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        setUpMusicControllers()
-
-        playPauseButton.setOnClickListener {
-            if (MusicPlayerRemote.isPlaying) {
-                MusicPlayerRemote.pauseSong()
-            } else {
-                MusicPlayerRemote.resumePlaying()
-            }
-            showBonceAnimation()
+        _binding = FragmentBlurPlayerPlaybackControlsBinding.bind(view)
+        setUpPlayPauseFab()
+        binding.title.isSelected = true
+        binding.text.isSelected = true
+        binding.title.setOnClickListener {
+            goToAlbum(requireActivity())
         }
-        title.isSelected = true
-        text.isSelected = true
+        binding.text.setOnClickListener {
+            goToArtist(requireActivity())
+        }
     }
 
     private fun updateSong() {
         val song = MusicPlayerRemote.currentSong
-        title.text = song.title
-        text.text = String.format("%s • %s", song.artistName, song.albumName)
+        binding.title.text = song.title
+        binding.text.text = String.format("%s • %s", song.artistName, song.albumName)
 
-        if (PreferenceUtil.getInstance(requireContext()).isSongInfo) {
-            songInfo.show()
-            songInfo?.text = getSongInfo(song)
+        if (PreferenceUtil.isSongInfo) {
+            binding.songInfo.show()
+            binding.songInfo.text = getSongInfo(song)
         } else {
-            songInfo?.hide()
+            binding.songInfo.hide()
         }
-    }
-
-    override fun onResume() {
-        super.onResume()
-        progressViewUpdateHelper!!.start()
-    }
-
-    override fun onPause() {
-        super.onPause()
-        progressViewUpdateHelper!!.stop()
     }
 
     override fun onServiceConnected() {
@@ -106,111 +115,58 @@ class BlurPlaybackControlsFragment : AbsPlayerControlsFragment() {
         updateShuffleState()
     }
 
-    override fun setDark(color: Int) {
+    override fun setColor(color: MediaNotificationProcessor) {
         lastPlaybackControlsColor = Color.WHITE
         lastDisabledPlaybackControlsColor =
-            ContextCompat.getColor(requireContext(), R.color.md_grey_500)
+            ContextCompat.getColor(requireContext(), code.name.monkey.appthemehelper.R.color.md_grey_500)
 
-        title.setTextColor(lastPlaybackControlsColor)
+        binding.title.setTextColor(lastPlaybackControlsColor)
 
-        songCurrentProgress.setTextColor(lastPlaybackControlsColor)
-        songTotalTime.setTextColor(lastPlaybackControlsColor)
+        binding.songCurrentProgress.setTextColor(lastPlaybackControlsColor)
+        binding.songTotalTime.setTextColor(lastPlaybackControlsColor)
 
         updateRepeatState()
         updateShuffleState()
         updatePrevNextColor()
 
-        text.setTextColor(lastDisabledPlaybackControlsColor)
-        songInfo.setTextColor(lastDisabledPlaybackControlsColor)
+        binding.text.setTextColor(lastPlaybackControlsColor)
+        binding.songInfo.setTextColor(lastDisabledPlaybackControlsColor)
 
-        TintHelper.setTintAuto(progressSlider, lastPlaybackControlsColor, false)
+        binding.progressSlider.applyColor(lastPlaybackControlsColor)
         volumeFragment?.setTintableColor(lastPlaybackControlsColor)
         setFabColor(lastPlaybackControlsColor)
     }
 
     private fun setFabColor(i: Int) {
         TintHelper.setTintAuto(
-            playPauseButton,
+            binding.playPauseButton,
             MaterialValueHelper.getPrimaryTextColor(context, ColorUtil.isColorLight(i)),
             false
         )
-        TintHelper.setTintAuto(playPauseButton, i, true)
+        TintHelper.setTintAuto(binding.playPauseButton, i, true)
     }
 
     private fun setUpPlayPauseFab() {
-        playPauseButton.setOnClickListener(PlayPauseButtonOnClickHandler())
+        binding.playPauseButton.setOnClickListener {
+            if (MusicPlayerRemote.isPlaying) {
+                MusicPlayerRemote.pauseSong()
+            } else {
+                MusicPlayerRemote.resumePlaying()
+            }
+            it.showBounceAnimation()
+        }
     }
 
     private fun updatePlayPauseDrawableState() {
         if (MusicPlayerRemote.isPlaying) {
-            playPauseButton.setImageResource(R.drawable.ic_pause_white_24dp)
+            binding.playPauseButton.setImageResource(R.drawable.ic_pause)
         } else {
-            playPauseButton.setImageResource(R.drawable.ic_play_arrow_white_32dp)
-        }
-    }
-
-    private fun setUpMusicControllers() {
-        setUpPlayPauseFab()
-        setUpPrevNext()
-        setUpRepeatButton()
-        setUpShuffleButton()
-        setUpProgressSlider()
-    }
-
-    private fun setUpPrevNext() {
-        updatePrevNextColor()
-        nextButton.setOnClickListener { MusicPlayerRemote.playNextSong() }
-        previousButton.setOnClickListener { MusicPlayerRemote.back() }
-    }
-
-    private fun updatePrevNextColor() {
-        nextButton.setColorFilter(lastPlaybackControlsColor, PorterDuff.Mode.SRC_IN)
-        previousButton.setColorFilter(lastPlaybackControlsColor, PorterDuff.Mode.SRC_IN)
-    }
-
-    private fun setUpShuffleButton() {
-        shuffleButton.setOnClickListener { MusicPlayerRemote.toggleShuffleMode() }
-    }
-
-    override fun updateShuffleState() {
-        when (MusicPlayerRemote.shuffleMode) {
-            MusicService.SHUFFLE_MODE_SHUFFLE -> shuffleButton.setColorFilter(
-                lastPlaybackControlsColor,
-                PorterDuff.Mode.SRC_IN
-            )
-            else -> shuffleButton.setColorFilter(
-                lastDisabledPlaybackControlsColor,
-                PorterDuff.Mode.SRC_IN
-            )
-        }
-    }
-
-    private fun setUpRepeatButton() {
-        repeatButton.setOnClickListener { MusicPlayerRemote.cycleRepeatMode() }
-    }
-
-    override fun updateRepeatState() {
-        when (MusicPlayerRemote.repeatMode) {
-            MusicService.REPEAT_MODE_NONE -> {
-                repeatButton.setImageResource(R.drawable.ic_repeat_white_24dp)
-                repeatButton.setColorFilter(
-                    lastDisabledPlaybackControlsColor,
-                    PorterDuff.Mode.SRC_IN
-                )
-            }
-            MusicService.REPEAT_MODE_ALL -> {
-                repeatButton.setImageResource(R.drawable.ic_repeat_white_24dp)
-                repeatButton.setColorFilter(lastPlaybackControlsColor, PorterDuff.Mode.SRC_IN)
-            }
-            MusicService.REPEAT_MODE_THIS -> {
-                repeatButton.setImageResource(R.drawable.ic_repeat_one_white_24dp)
-                repeatButton.setColorFilter(lastPlaybackControlsColor, PorterDuff.Mode.SRC_IN)
-            }
+            binding.playPauseButton.setImageResource(R.drawable.ic_play_arrow_white_32dp)
         }
     }
 
     public override fun show() {
-        playPauseButton!!.animate()
+        binding.playPauseButton.animate()
             .scaleX(1f)
             .scaleY(1f)
             .rotation(360f)
@@ -219,54 +175,15 @@ class BlurPlaybackControlsFragment : AbsPlayerControlsFragment() {
     }
 
     public override fun hide() {
-        if (playPauseButton != null) {
-            playPauseButton!!.apply {
-                scaleX = 0f
-                scaleY = 0f
-                rotation = 0f
-            }
+        binding.playPauseButton.apply {
+            scaleX = 0f
+            scaleY = 0f
+            rotation = 0f
         }
     }
 
-    private fun showBonceAnimation() {
-        playPauseButton.apply {
-            clearAnimation()
-            scaleX = 0.9f
-            scaleY = 0.9f
-            visibility = View.VISIBLE
-            pivotX = (width / 2).toFloat()
-            pivotY = (height / 2).toFloat()
-
-            animate().setDuration(200)
-                .setInterpolator(DecelerateInterpolator())
-                .scaleX(1.1f)
-                .scaleY(1.1f)
-                .withEndAction {
-                    animate().setDuration(200)
-                        .setInterpolator(AccelerateInterpolator())
-                        .scaleX(1f)
-                        .scaleY(1f)
-                        .alpha(1f).start()
-                }.start()
-        }
-    }
-
-    override fun onUpdateProgressViews(progress: Int, total: Int) {
-        progressSlider.valueTo = total.toFloat()
-        progressSlider.value = progress.toFloat()
-        songTotalTime.text = MusicUtil.getReadableDurationString(total.toLong())
-        songCurrentProgress.text = MusicUtil.getReadableDurationString(progress.toLong())
-    }
-
-    override fun setUpProgressSlider() {
-        progressSlider.addOnChangeListener { _, value, fromUser ->
-            if (fromUser) {
-                MusicPlayerRemote.seekTo(value.toInt())
-                onUpdateProgressViews(
-                    MusicPlayerRemote.songProgressMillis,
-                    MusicPlayerRemote.songDurationMillis
-                )
-            }
-        }
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 }

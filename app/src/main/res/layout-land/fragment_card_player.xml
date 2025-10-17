@@ -13,7 +13,7 @@
         android:layout_height="match_parent"
         android:background="?attr/colorSurface" />
 
-    <fragment
+    <androidx.fragment.app.FragmentContainerView
         android:id="@+id/playerAlbumCoverFragment"
         android:name="code.name.monkey.retromusic.fragments.player.PlayerAlbumCoverFragment"
         android:layout_width="match_parent"
@@ -21,7 +21,6 @@
         tools:layout="@layout/fragment_album_full_cover" />
 
     <FrameLayout
-        android:id="@+id/toolbar_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
@@ -39,8 +38,10 @@
             <com.google.android.material.appbar.MaterialToolbar
                 android:id="@+id/playerToolbar"
                 style="@style/Toolbar"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
                 android:background="@android:color/transparent"
-                app:navigationIcon="@drawable/ic_keyboard_arrow_down_black_24dp" />
+                app:navigationIcon="@drawable/ic_keyboard_arrow_down" />
         </LinearLayout>
     </FrameLayout>
 
@@ -54,7 +55,7 @@
         app:cardCornerRadius="8dp"
         app:cardUseCompatPadding="true">
 
-        <fragment
+        <androidx.fragment.app.FragmentContainerView
             android:id="@+id/playbackControlsFragment"
             android:name="code.name.monkey.retromusic.fragments.player.card.CardPlaybackControlsFragment"
             android:layout_width="match_parent"

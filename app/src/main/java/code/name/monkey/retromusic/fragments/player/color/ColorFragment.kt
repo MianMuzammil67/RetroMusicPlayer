@@ -1,49 +1,76 @@
+/*
+ * Copyright (c) 2020 Hemanth Savarla.
+ *
+ * Licensed under the GNU General Public License v3
+ *
+ * This is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU General Public License for more details.
+ *
+ */
 package code.name.monkey.retromusic.fragments.player.color
 
 import android.animation.ValueAnimator
-import android.graphics.drawable.Drawable
 import android.os.Bundle
-import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
 import androidx.appcompat.widget.Toolbar
-import code.name.monkey.appthemehelper.util.ATHUtil
-import code.name.monkey.appthemehelper.util.ColorUtil
-import code.name.monkey.appthemehelper.util.MaterialValueHelper
+import androidx.core.animation.doOnEnd
 import code.name.monkey.appthemehelper.util.ToolbarContentTintHelper
 import code.name.monkey.retromusic.R
+import code.name.monkey.retromusic.databinding.FragmentColorPlayerBinding
+import code.name.monkey.retromusic.extensions.colorControlNormal
+import code.name.monkey.retromusic.extensions.drawAboveSystemBars
+import code.name.monkey.retromusic.extensions.whichFragment
 import code.name.monkey.retromusic.fragments.base.AbsPlayerFragment
-import code.name.monkey.retromusic.glide.RetroMusicColoredTarget
-import code.name.monkey.retromusic.glide.SongGlideRequest.Builder
-import code.name.monkey.retromusic.glide.palette.BitmapPaletteWrapper
+import code.name.monkey.retromusic.fragments.player.PlayerAlbumCoverFragment
 import code.name.monkey.retromusic.helper.MusicPlayerRemote
 import code.name.monkey.retromusic.model.Song
-import code.name.monkey.retromusic.util.NavigationUtil
-import code.name.monkey.retromusic.util.RetroColorUtil
-import com.bumptech.glide.Glide
-import com.bumptech.glide.request.animation.GlideAnimation
-import kotlinx.android.synthetic.main.fragment_color_player.*
+import code.name.monkey.retromusic.util.color.MediaNotificationProcessor
 
-class ColorFragment : AbsPlayerFragment() {
+class ColorFragment : AbsPlayerFragment(R.layout.fragment_color_player) {
 
     private var lastColor: Int = 0
-    private var backgroundColor: Int = 0
+    private var navigationColor: Int = 0
     private lateinit var playbackControlsFragment: ColorPlaybackControlsFragment
     private var valueAnimator: ValueAnimator? = null
+    private var _binding: FragmentColorPlayerBinding? = null
+    private val binding get() = _binding!!
 
     override fun playerToolbar(): Toolbar {
-        return playerToolbar
+        return binding.playerToolbar
     }
 
     override val paletteColor: Int
-        get() = backgroundColor
+        get() = navigationColor
 
-    override fun onColorChanged(color: Int) {
+    override fun onColorChanged(color: MediaNotificationProcessor) {
+        libraryViewModel.updateColor(color.backgroundColor)
+        lastColor = color.secondaryTextColor
+        playbackControlsFragment.setColor(color)
+        navigationColor = color.backgroundColor
 
+        binding.colorGradientBackground.setBackgroundColor(color.backgroundColor)
+        val animator =
+            playbackControlsFragment.createRevealAnimator(binding.colorGradientBackground)
+        animator.doOnEnd {
+            _binding?.root?.setBackgroundColor(color.backgroundColor)
+        }
+        animator.start()
+        binding.playerToolbar.post {
+            ToolbarContentTintHelper.colorizeToolbar(
+                binding.playerToolbar,
+                color.secondaryTextColor,
+                requireActivity()
+            )
+        }
     }
 
     override fun onFavoriteToggled() {
-        //toggleFavorite(MusicPlayerRemote.currentSong)
+        toggleFavorite(MusicPlayerRemote.currentSong)
     }
 
     override fun onShow() {
@@ -52,11 +79,6 @@ class ColorFragment : AbsPlayerFragment() {
 
     override fun onHide() {
         playbackControlsFragment.hide()
-        onBackPressed()
-    }
-
-    override fun onBackPressed(): Boolean {
-        return false
     }
 
     override fun toolbarIconColor(): Int {
@@ -76,110 +98,40 @@ class ColorFragment : AbsPlayerFragment() {
             valueAnimator!!.cancel()
             valueAnimator = null
         }
-    }
-
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View? {
-        return inflater.inflate(R.layout.fragment_color_player, container, false)
+        _binding = null
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        _binding = FragmentColorPlayerBinding.bind(view)
         setUpSubFragments()
         setUpPlayerToolbar()
-        playerImage.setOnClickListener {
-            NavigationUtil.goToLyrics(requireActivity())
-        }
+        val playerAlbumCoverFragment: PlayerAlbumCoverFragment =
+            whichFragment(R.id.playerAlbumCoverFragment)
+        playerAlbumCoverFragment.setCallbacks(this)
+        playerToolbar().drawAboveSystemBars()
     }
 
     private fun setUpSubFragments() {
-        playbackControlsFragment =
-            childFragmentManager.findFragmentById(R.id.playbackControlsFragment) as ColorPlaybackControlsFragment
+        playbackControlsFragment = whichFragment(R.id.playbackControlsFragment)
     }
 
     private fun setUpPlayerToolbar() {
-        playerToolbar.apply {
+        binding.playerToolbar.apply {
             inflateMenu(R.menu.menu_player)
-            setNavigationOnClickListener { requireActivity().onBackPressed() }
+            setNavigationOnClickListener { requireActivity().onBackPressedDispatcher.onBackPressed() }
             setOnMenuItemClickListener(this@ColorFragment)
             ToolbarContentTintHelper.colorizeToolbar(
                 this,
-                ATHUtil.resolveColor(requireContext(), R.attr.colorControlNormal),
+                colorControlNormal(),
                 requireActivity()
             )
         }
     }
 
-    override fun onPlayingMetaChanged() {
-        super.onPlayingMetaChanged()
-        updateSong()
-    }
-
-    override fun onServiceConnected() {
-        super.onServiceConnected()
-        updateSong()
-    }
-
-    private fun updateSong() {
-        Builder.from(Glide.with(requireActivity()), MusicPlayerRemote.currentSong)
-            .checkIgnoreMediaStore(requireContext())
-            .generatePalette(requireContext())
-            .build()
-            .into(object : RetroMusicColoredTarget(playerImage) {
-                override fun onColorReady(color: Int) {
-
-                }
-
-                override fun onResourceReady(
-                    resource: BitmapPaletteWrapper?,
-                    glideAnimation: GlideAnimation<in BitmapPaletteWrapper>?
-                ) {
-                    super.onResourceReady(resource, glideAnimation)
-                    resource?.let {
-                        val palette = resource.palette
-                        val swatch = RetroColorUtil.getSwatch(palette)
-
-                        val textColor = RetroColorUtil.getTextColor(palette)
-                        val backgroundColor = swatch.rgb
-
-                        setColors(backgroundColor, textColor)
-                    }
-
-                }
-
-                override fun onLoadFailed(e: Exception?, errorDrawable: Drawable?) {
-                    super.onLoadFailed(e, errorDrawable)
-                    val backgroundColor = defaultFooterColor
-                    val textColor =
-                        if (ColorUtil.isColorLight(defaultFooterColor)) MaterialValueHelper.getPrimaryTextColor(
-                            requireContext(),
-                            true
-                        )
-                        else MaterialValueHelper.getPrimaryTextColor(requireContext(), false)
-                    setColors(backgroundColor, textColor)
-                }
-            })
-    }
-
-    private fun setColors(backgroundColor: Int, componentsColor: Int) {
-        this.lastColor = componentsColor
-        this.backgroundColor = backgroundColor
-        playbackControlsFragment.setDark(componentsColor, backgroundColor)
-        colorGradientBackground?.setBackgroundColor(backgroundColor)
-        playerActivity?.setLightNavigationBar(ColorUtil.isColorLight(backgroundColor))
-        callbacks?.onPaletteColorChanged()
-        ToolbarContentTintHelper.colorizeToolbar(playerToolbar, componentsColor, requireActivity())
-    }
-
     companion object {
         fun newInstance(): ColorFragment {
-            val args = Bundle()
-            val fragment = ColorFragment()
-            fragment.arguments = args
-            return fragment
+            return ColorFragment()
         }
     }
 }

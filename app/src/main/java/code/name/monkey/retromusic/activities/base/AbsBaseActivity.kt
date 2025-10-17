@@ -1,18 +1,39 @@
+/*
+ * Copyright (c) 2020 Hemanth Savarla.
+ *
+ * Licensed under the GNU General Public License v3
+ *
+ * This is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU General Public License for more details.
+ *
+ */
 package code.name.monkey.retromusic.activities.base
 
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Rect
 import android.media.AudioManager
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.view.KeyEvent
+import android.view.MotionEvent
 import android.view.View
+import android.view.inputmethod.InputMethodManager
+import android.widget.EditText
 import androidx.core.app.ActivityCompat
-import code.name.monkey.appthemehelper.ThemeStore
+import androidx.core.content.getSystemService
+import code.name.monkey.appthemehelper.util.VersionUtils
 import code.name.monkey.retromusic.R
+import code.name.monkey.retromusic.extensions.accentColor
+import code.name.monkey.retromusic.extensions.rootView
+import code.name.monkey.retromusic.util.logD
 import com.google.android.material.snackbar.Snackbar
 
 abstract class AbsBaseActivity : AbsThemeActivity() {
@@ -33,7 +54,7 @@ abstract class AbsBaseActivity : AbsThemeActivity() {
     }
 
     private val snackBarContainer: View
-        get() = window.decorView
+        get() = rootView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -43,26 +64,18 @@ abstract class AbsBaseActivity : AbsThemeActivity() {
         permissionDeniedMessage = null
     }
 
-    override fun onPostCreate(savedInstanceState: Bundle?) {
-        super.onPostCreate(savedInstanceState)
-        if (!hasPermissions()) {
-            requestPermissions()
-        }
-    }
-
     override fun onResume() {
         super.onResume()
         val hasPermissions = hasPermissions()
         if (hasPermissions != hadPermissions) {
             hadPermissions = hasPermissions
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                onHasPermissionsChanged(hasPermissions)
-            }
+            onHasPermissionsChanged(hasPermissions)
         }
     }
 
     protected open fun onHasPermissionsChanged(hasPermissions: Boolean) {
         // implemented by sub classes
+        logD(hasPermissions)
     }
 
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
@@ -77,17 +90,15 @@ abstract class AbsBaseActivity : AbsThemeActivity() {
     }
 
     protected open fun requestPermissions() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            requestPermissions(permissions, PERMISSION_REQUEST)
-        }
+        ActivityCompat.requestPermissions(this, permissions, PERMISSION_REQUEST)
     }
 
     protected fun hasPermissions(): Boolean {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            for (permission in permissions) {
-                if (checkSelfPermission(permission) != PackageManager.PERMISSION_GRANTED) {
-                    return false
-                }
+        for (permission in permissions) {
+            if (ActivityCompat.checkSelfPermission(this,
+                    permission) != PackageManager.PERMISSION_GRANTED
+            ) {
+                return false
             }
         }
         return true
@@ -96,51 +107,96 @@ abstract class AbsBaseActivity : AbsThemeActivity() {
     override fun onRequestPermissionsResult(
         requestCode: Int,
         permissions: Array<String>,
-        grantResults: IntArray
+        grantResults: IntArray,
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == PERMISSION_REQUEST) {
             for (grantResult in grantResults) {
                 if (grantResult != PackageManager.PERMISSION_GRANTED) {
                     if (ActivityCompat.shouldShowRequestPermissionRationale(
-                            this@AbsBaseActivity, Manifest.permission.WRITE_EXTERNAL_STORAGE
+                            this@AbsBaseActivity, Manifest.permission.READ_EXTERNAL_STORAGE,
+                        ) || ActivityCompat.shouldShowRequestPermissionRationale(
+                            this@AbsBaseActivity, Manifest.permission.WRITE_EXTERNAL_STORAGE,
                         )
                     ) {
-                        //User has deny from permission dialog
+                        // User has deny from permission dialog
                         Snackbar.make(
                             snackBarContainer,
                             permissionDeniedMessage!!,
-                            Snackbar.LENGTH_INDEFINITE
+                            Snackbar.LENGTH_SHORT
                         )
-                            .setAction(code.name.monkey.retromusic.R.string.action_grant) { requestPermissions() }
-                            .setActionTextColor(ThemeStore.accentColor(this)).show()
+                            .setAction(R.string.action_grant) { requestPermissions() }
+                            .setActionTextColor(accentColor()).show()
                     } else {
                         // User has deny permission and checked never show permission dialog so you can redirect to Application settings page
                         Snackbar.make(
                             snackBarContainer,
                             permissionDeniedMessage!!,
                             Snackbar.LENGTH_INDEFINITE
-                        ).setAction(code.name.monkey.retromusic.R.string.action_settings) {
-                            val intent = Intent()
-                            intent.action = Settings.ACTION_APPLICATION_DETAILS_SETTINGS
-                            val uri = Uri.fromParts(
-                                "package",
-                                this@AbsBaseActivity.packageName,
-                                null
-                            )
-                            intent.data = uri
-                            startActivity(intent)
-                        }.setActionTextColor(ThemeStore.accentColor(this)).show()
+                        )
+                            .setAction(R.string.action_settings) {
+                                val intent = Intent()
+                                intent.action = Settings.ACTION_APPLICATION_DETAILS_SETTINGS
+                                val uri = Uri.fromParts(
+                                    "package",
+                                    this@AbsBaseActivity.packageName,
+                                    null
+                                )
+                                intent.data = uri
+                                startActivity(intent)
+                            }.setActionTextColor(accentColor()).show()
                     }
                     return
                 }
             }
             hadPermissions = true
             onHasPermissionsChanged(true)
+        } else if (requestCode == BLUETOOTH_PERMISSION_REQUEST) {
+            for (grantResult in grantResults) {
+                if (grantResult != PackageManager.PERMISSION_GRANTED) {
+                    if (ActivityCompat.shouldShowRequestPermissionRationale(
+                            this@AbsBaseActivity, Manifest.permission.BLUETOOTH_CONNECT
+                        )
+                    ) {
+                        // User has deny from permission dialog
+                        Snackbar.make(
+                            snackBarContainer,
+                            R.string.permission_bluetooth_denied,
+                            Snackbar.LENGTH_SHORT
+                        )
+                            .setAction(R.string.action_grant) {
+                                ActivityCompat.requestPermissions(this,
+                                    arrayOf(Manifest.permission.BLUETOOTH_CONNECT),
+                                    BLUETOOTH_PERMISSION_REQUEST)
+                            }
+                            .setActionTextColor(accentColor()).show()
+                    }
+                }
+            }
         }
     }
 
     companion object {
         const val PERMISSION_REQUEST = 100
+        const val BLUETOOTH_PERMISSION_REQUEST = 101
+    }
+
+    // this lets keyboard close when clicked in background
+    override fun dispatchTouchEvent(event: MotionEvent): Boolean {
+        if (event.action == MotionEvent.ACTION_DOWN) {
+            val v = currentFocus
+            if (v is EditText) {
+                val outRect = Rect()
+                v.getGlobalVisibleRect(outRect)
+                if (!outRect.contains(event.rawX.toInt(), event.rawY.toInt())) {
+                    v.clearFocus()
+                    getSystemService<InputMethodManager>()?.hideSoftInputFromWindow(
+                        v.windowToken,
+                        0
+                    )
+                }
+            }
+        }
+        return super.dispatchTouchEvent(event)
     }
 }

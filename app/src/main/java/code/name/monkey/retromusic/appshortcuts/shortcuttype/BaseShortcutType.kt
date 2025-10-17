@@ -1,17 +1,17 @@
 /*
- * Copyright (c) 2019 Hemanth Savarala.
+ * Copyright (c) 2020 Hemanth Savarla.
  *
  * Licensed under the GNU General Public License v3
  *
- * This is free software: you can redistribute it and/or modify it under
- * the terms of the GNU General Public License as published by
- *  the Free Software Foundation either version 3 of the License, or (at your option) any later version.
+ * This is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
  *
  * This software is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
+ *
  */
-
 package code.name.monkey.retromusic.appshortcuts.shortcuttype
 
 import android.annotation.TargetApi
@@ -19,7 +19,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.ShortcutInfo
 import android.os.Build
-import android.os.Bundle
+import androidx.core.os.bundleOf
 import code.name.monkey.retromusic.appshortcuts.AppShortcutLauncherActivity
 
 @TargetApi(Build.VERSION_CODES.N_MR1)
@@ -33,11 +33,10 @@ abstract class BaseShortcutType(internal var context: Context) {
      * @param shortcutType Describes the type of shortcut to create (ShuffleAll, TopTracks, custom playlist, etc.)
      * @return
      */
-    internal fun getPlaySongsIntent(shortcutType: Int): Intent {
+    internal fun getPlaySongsIntent(shortcutType: Long): Intent {
         val intent = Intent(context, AppShortcutLauncherActivity::class.java)
         intent.action = Intent.ACTION_VIEW
-        val b = Bundle()
-        b.putInt(AppShortcutLauncherActivity.KEY_SHORTCUT_TYPE, shortcutType)
+        val b = bundleOf(AppShortcutLauncherActivity.KEY_SHORTCUT_TYPE to shortcutType)
         intent.putExtras(b)
         return intent
     }

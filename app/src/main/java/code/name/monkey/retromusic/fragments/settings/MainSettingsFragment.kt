@@ -1,17 +1,17 @@
 /*
- * Copyright (c) 2019 Hemanth Savarala.
+ * Copyright (c) 2020 Hemanth Savarla.
  *
  * Licensed under the GNU General Public License v3
  *
- * This is free software: you can redistribute it and/or modify it under
- * the terms of the GNU General Public License as published by
- *  the Free Software Foundation either version 3 of the License, or (at your option) any later version.
+ * This is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
  *
  * This software is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
+ *
  */
-
 package code.name.monkey.retromusic.fragments.settings
 
 import android.content.res.ColorStateList
@@ -19,85 +19,78 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.annotation.StringRes
+import androidx.core.view.isGone
 import androidx.fragment.app.Fragment
+import androidx.navigation.fragment.findNavController
 import code.name.monkey.appthemehelper.ThemeStore
 import code.name.monkey.retromusic.App
 import code.name.monkey.retromusic.R
-import code.name.monkey.retromusic.activities.SettingsActivity
-import code.name.monkey.retromusic.extensions.hide
-import code.name.monkey.retromusic.extensions.show
-import code.name.monkey.retromusic.util.NavigationUtil
-import kotlinx.android.synthetic.main.fragment_main_settings.*
+import code.name.monkey.retromusic.databinding.FragmentMainSettingsBinding
+import code.name.monkey.retromusic.extensions.drawAboveSystemBarsWithPadding
+import code.name.monkey.retromusic.extensions.goToProVersion
 
 class MainSettingsFragment : Fragment(), View.OnClickListener {
+
+    private var _binding: FragmentMainSettingsBinding? = null
+    private val binding get() = _binding!!
+
+
     override fun onClick(view: View) {
-        when (view.id) {
-            R.id.generalSettings -> inflateFragment(
-                ThemeSettingsFragment(),
-                R.string.general_settings_title
-            )
-            R.id.audioSettings -> inflateFragment(AudioSettings(), R.string.pref_header_audio)
-            R.id.nowPlayingSettings -> inflateFragment(
-                NowPlayingSettingsFragment(),
-                R.string.now_playing
-            )
-            R.id.personalizeSettings -> inflateFragment(
-                PersonalizeSettingsFragment(),
-                R.string.personalize
-            )
-            R.id.imageSettings -> inflateFragment(
-                ImageSettingFragment(),
-                R.string.pref_header_images
-            )
-            R.id.notificationSettings -> inflateFragment(
-                NotificationSettingsFragment(),
-                R.string.notification
-            )
-            R.id.otherSettings -> inflateFragment(OtherSettingsFragment(), R.string.others)
-            R.id.aboutSettings -> NavigationUtil.goToAbout(requireActivity())
-        }
+        findNavController().navigate(
+            when (view.id) {
+                R.id.generalSettings -> R.id.action_mainSettingsFragment_to_themeSettingsFragment
+                R.id.audioSettings -> R.id.action_mainSettingsFragment_to_audioSettings
+                R.id.personalizeSettings -> R.id.action_mainSettingsFragment_to_personalizeSettingsFragment
+                R.id.imageSettings -> R.id.action_mainSettingsFragment_to_imageSettingFragment
+                R.id.otherSettings -> R.id.action_mainSettingsFragment_to_otherSettingsFragment
+                R.id.aboutSettings -> R.id.action_mainSettingsFragment_to_aboutActivity
+                R.id.nowPlayingSettings -> R.id.action_mainSettingsFragment_to_nowPlayingSettingsFragment
+                R.id.backup_restore_settings -> R.id.action_mainSettingsFragment_to_backupFragment
+                else -> R.id.action_mainSettingsFragment_to_themeSettingsFragment
+            }
+        )
     }
 
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
+        inflater: LayoutInflater,
+        container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        return inflater.inflate(R.layout.fragment_main_settings, container, false)
+    ): View {
+        _binding = FragmentMainSettingsBinding.inflate(inflater, container, false)
+        return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        generalSettings.setOnClickListener(this)
-        audioSettings.setOnClickListener(this)
-        nowPlayingSettings.setOnClickListener(this)
-        personalizeSettings.setOnClickListener(this)
-        imageSettings.setOnClickListener(this)
-        notificationSettings.setOnClickListener(this)
-        otherSettings.setOnClickListener(this)
-        aboutSettings.setOnClickListener(this)
+        binding.generalSettings.setOnClickListener(this)
+        binding.audioSettings.setOnClickListener(this)
+        binding.nowPlayingSettings.setOnClickListener(this)
+        binding.personalizeSettings.setOnClickListener(this)
+        binding.imageSettings.setOnClickListener(this)
+        binding.otherSettings.setOnClickListener(this)
+        binding.aboutSettings.setOnClickListener(this)
+        binding.backupRestoreSettings.setOnClickListener(this)
 
-        buyProContainer.apply {
-            if (!App.isProVersion()) show() else hide()
+        binding.buyProContainer.apply {
+            isGone = App.isProVersion()
             setOnClickListener {
-                NavigationUtil.goToProVersion(requireContext())
+                requireContext().goToProVersion()
             }
         }
-        buyPremium.setOnClickListener {
-            NavigationUtil.goToProVersion(requireContext())
+        binding.buyPremium.setOnClickListener {
+            requireContext().goToProVersion()
         }
         ThemeStore.accentColor(requireContext()).let {
-            buyPremium.setTextColor(it)
-            diamondIcon.imageTintList = ColorStateList.valueOf(it)
+            binding.buyPremium.setTextColor(it)
+            binding.diamondIcon.imageTintList = ColorStateList.valueOf(it)
         }
+
+        binding.container.drawAboveSystemBarsWithPadding()
     }
 
-    companion object {
-
-    }
-
-    private fun inflateFragment(fragment: Fragment, @StringRes title: Int) {
-        (requireActivity() as SettingsActivity).setupFragment(fragment, title)
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 }

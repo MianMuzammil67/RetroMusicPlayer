@@ -1,28 +1,48 @@
+/*
+ * Copyright (c) 2020 Hemanth Savarla.
+ *
+ * Licensed under the GNU General Public License v3
+ *
+ * This is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU General Public License for more details.
+ *
+ */
 package code.name.monkey.retromusic.fragments.player.plain
 
 import android.os.Bundle
-import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
 import androidx.appcompat.widget.Toolbar
-import code.name.monkey.appthemehelper.util.ATHUtil
 import code.name.monkey.appthemehelper.util.ToolbarContentTintHelper
 import code.name.monkey.retromusic.R
+import code.name.monkey.retromusic.databinding.FragmentPlainPlayerBinding
+import code.name.monkey.retromusic.extensions.colorControlNormal
+import code.name.monkey.retromusic.extensions.drawAboveSystemBars
+import code.name.monkey.retromusic.extensions.whichFragment
 import code.name.monkey.retromusic.fragments.base.AbsPlayerFragment
+import code.name.monkey.retromusic.fragments.base.goToAlbum
+import code.name.monkey.retromusic.fragments.base.goToArtist
 import code.name.monkey.retromusic.fragments.player.PlayerAlbumCoverFragment
 import code.name.monkey.retromusic.helper.MusicPlayerRemote
 import code.name.monkey.retromusic.model.Song
-import kotlinx.android.synthetic.main.fragment_plain_player.*
+import code.name.monkey.retromusic.util.color.MediaNotificationProcessor
 
-class PlainPlayerFragment : AbsPlayerFragment() {
+class PlainPlayerFragment : AbsPlayerFragment(R.layout.fragment_plain_player) {
     override fun playerToolbar(): Toolbar {
-        return playerToolbar
+        return binding.playerToolbar
     }
 
     private lateinit var plainPlaybackControlsFragment: PlainPlaybackControlsFragment
     private var lastColor: Int = 0
     override val paletteColor: Int
         get() = lastColor
+    private var _binding: FragmentPlainPlayerBinding? = null
+    private val binding get() = _binding!!
+
 
     override fun onPlayingMetaChanged() {
         super.onPlayingMetaChanged()
@@ -31,8 +51,8 @@ class PlainPlayerFragment : AbsPlayerFragment() {
 
     private fun updateSong() {
         val song = MusicPlayerRemote.currentSong
-        title.text = song.title
-        text.text = song.artistName
+        binding.title.text = song.title
+        binding.text.text = song.artistName
     }
 
     override fun onServiceConnected() {
@@ -40,21 +60,14 @@ class PlainPlayerFragment : AbsPlayerFragment() {
         updateSong()
     }
 
-    override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View? {
-        return inflater.inflate(R.layout.fragment_plain_player, container, false)
-    }
-
     private fun setUpPlayerToolbar() {
-        playerToolbar.apply {
+        binding.playerToolbar.apply {
             inflateMenu(R.menu.menu_player)
-            setNavigationOnClickListener { requireActivity().onBackPressed() }
+            setNavigationOnClickListener { requireActivity().onBackPressedDispatcher.onBackPressed() }
             setOnMenuItemClickListener(this@PlainPlayerFragment)
             ToolbarContentTintHelper.colorizeToolbar(
                 this,
-                ATHUtil.resolveColor(requireContext(), R.attr.colorControlNormal),
+                colorControlNormal(),
                 requireActivity()
             )
         }
@@ -62,17 +75,24 @@ class PlainPlayerFragment : AbsPlayerFragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        _binding = FragmentPlainPlayerBinding.bind(view)
         setUpSubFragments()
         setUpPlayerToolbar()
-        title.isSelected = true
-        text.isSelected = true
+        binding.title.isSelected = true
+        binding.text.isSelected = true
+        binding.title.setOnClickListener {
+            goToAlbum(requireActivity())
+        }
+        binding.text.setOnClickListener {
+            goToArtist(requireActivity())
+        }
+        playerToolbar().drawAboveSystemBars()
     }
 
     private fun setUpSubFragments() {
-        plainPlaybackControlsFragment =
-            childFragmentManager.findFragmentById(R.id.playbackControlsFragment) as PlainPlaybackControlsFragment
-        val playerAlbumCoverFragment =
-            childFragmentManager.findFragmentById(R.id.playerAlbumCoverFragment) as PlayerAlbumCoverFragment
+        plainPlaybackControlsFragment = whichFragment(R.id.playbackControlsFragment)
+        val playerAlbumCoverFragment: PlayerAlbumCoverFragment =
+            whichFragment(R.id.playerAlbumCoverFragment)
         playerAlbumCoverFragment.setCallbacks(this)
     }
 
@@ -82,24 +102,17 @@ class PlainPlayerFragment : AbsPlayerFragment() {
 
     override fun onHide() {
         plainPlaybackControlsFragment.hide()
-        onBackPressed()
     }
 
-    override fun onBackPressed(): Boolean {
-        return false
-    }
+    override fun toolbarIconColor() = colorControlNormal()
 
-    override fun toolbarIconColor(): Int {
-        return ATHUtil.resolveColor(requireContext(), R.attr.colorControlNormal)
-    }
-
-    override fun onColorChanged(color: Int) {
-        plainPlaybackControlsFragment.setDark(color)
-        lastColor = color
-        callbacks!!.onPaletteColorChanged()
+    override fun onColorChanged(color: MediaNotificationProcessor) {
+        plainPlaybackControlsFragment.setColor(color)
+        lastColor = color.primaryTextColor
+        libraryViewModel.updateColor(color.primaryTextColor)
         ToolbarContentTintHelper.colorizeToolbar(
-            playerToolbar,
-            ATHUtil.resolveColor(requireContext(), R.attr.colorControlNormal),
+            binding.playerToolbar,
+            colorControlNormal(),
             requireActivity()
         )
     }
@@ -113,5 +126,10 @@ class PlainPlayerFragment : AbsPlayerFragment() {
         if (song.id == MusicPlayerRemote.currentSong.id) {
             updateIsFavorite()
         }
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 }

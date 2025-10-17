@@ -17,24 +17,24 @@
         android:visibility="gone" />
 
     <androidx.appcompat.widget.AppCompatImageButton
-        android:id="@+id/playerRepeatButton"
+        android:id="@+id/repeatButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:background="?attr/roundSelector"
         android:padding="16dp"
         android:scaleType="fitCenter"
-        app:srcCompat="@drawable/ic_repeat_white_24dp"
+        app:srcCompat="@drawable/ic_repeat"
         tools:ignore="MissingPrefix"
         tools:tint="@color/md_black_1000" />
 
     <androidx.appcompat.widget.AppCompatImageButton
-        android:id="@+id/playerShuffleButton"
+        android:id="@+id/shuffleButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:background="?attr/roundSelector"
         android:padding="16dp"
         android:scaleType="fitCenter"
-        app:srcCompat="@drawable/ic_shuffle_white_24dp"
+        app:srcCompat="@drawable/ic_shuffle"
         tools:ignore="MissingPrefix"
         tools:tint="@color/md_black_1000" />
 </LinearLayout>

@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    style="@style/MaterialCardViewStroke"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    app:cardCornerRadius="8dp"
-    app:cardUseCompatPadding="true">
+    app:cardCornerRadius="@dimen/about_card_radius">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
@@ -20,7 +20,7 @@
             android:paddingEnd="?attr/listPreferredItemPaddingEnd"
             android:paddingBottom="?attr/listPreferredItemPaddingEnd"
             android:text="@string/others"
-            android:textAppearance="@style/TextViewOverline"
+            android:textAppearance="@style/TextViewNormal"
             android:textColor="?colorAccent"
             app:layout_constrainedWidth="true"
             app:layout_constraintEnd_toEndOf="parent"
@@ -38,12 +38,12 @@
             app:layout_constraintHorizontal_bias="0"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/sb4"
-            app:listItemIcon="@drawable/ic_file_edit_white_24dp"
+            app:listItemIcon="@drawable/ic_file_edit"
             app:listItemSummary="@string/changelog_summary"
             app:listItemTitle="@string/changelog" />
 
         <code.name.monkey.retromusic.views.ListItemView
-            android:id="@+id/translators"
+            android:id="@+id/openSource"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             app:layout_constrainedWidth="true"
@@ -51,38 +51,24 @@
             app:layout_constraintHorizontal_bias="0"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/changelog"
-            app:listItemIcon="@drawable/ic_account_group_white_24dp"
-            app:listItemSummary="@string/translators_summary"
-            app:listItemTitle="@string/translators" />
-
-        <code.name.monkey.retromusic.views.ListItemView
-            android:id="@+id/openSource"
-            android:layout_width="0dp"
-            app:listItemIcon="@drawable/ic_license_white_24dp"
-            android:layout_height="wrap_content"
-            app:layout_constrainedWidth="true"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/translators"
+            app:listItemIcon="@drawable/ic_license"
             app:listItemSummary="@string/pref_summary_open_source_licences"
             app:listItemTitle="@string/pref_title_open_source_licences" />
 
         <code.name.monkey.retromusic.views.ListItemView
             android:id="@+id/version"
             android:layout_width="0dp"
-            app:listItemIcon="@drawable/ic_info_outline_white_24dp"
             android:layout_height="wrap_content"
             app:layout_constrainedWidth="true"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/openSource"
+            app:listItemIcon="@drawable/ic_info_outline"
             app:listItemSummary="@string/pref_summary_open_source_licences"
             app:listItemTitle="@string/version" />
 
         <com.google.android.material.textview.MaterialTextView
-            android:id="@+id/madeText"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_gravity="center"

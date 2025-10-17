@@ -16,14 +16,13 @@ package code.name.monkey.retromusic.adapter.base;
 
 import android.graphics.Color;
 import android.view.View;
-import android.view.ViewGroup;
-import android.widget.ImageButton;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.recyclerview.widget.RecyclerView;
+import androidx.appcompat.widget.AppCompatImageView;
 
 import com.google.android.material.card.MaterialCardView;
 import com.h6ah4i.android.widget.advrecyclerview.utils.AbstractDraggableSwipeableItemViewHolder;
@@ -43,13 +42,10 @@ public class MediaEntryViewHolder extends AbstractDraggableSwipeableItemViewHold
     public ImageView image;
 
     @Nullable
-    public ImageView playerImage;
-
-    @Nullable
-    public ViewGroup imageContainer;
-
-    @Nullable
     public MaterialCardView imageContainerCard;
+
+    @Nullable
+    public FrameLayout imageContainer;
 
     @Nullable
     public TextView imageText;
@@ -61,19 +57,16 @@ public class MediaEntryViewHolder extends AbstractDraggableSwipeableItemViewHold
     public View mask;
 
     @Nullable
-    public View menu;
+    public AppCompatImageView menu;
 
     @Nullable
     public View paletteColorContainer;
 
     @Nullable
-    public ImageButton playSongs;
-
-    @Nullable
-    public RecyclerView recyclerView;
-
-    @Nullable
     public TextView text;
+
+    @Nullable
+    public TextView text2;
 
     @Nullable
     public TextView time;
@@ -85,22 +78,20 @@ public class MediaEntryViewHolder extends AbstractDraggableSwipeableItemViewHold
         super(itemView);
         title = itemView.findViewById(R.id.title);
         text = itemView.findViewById(R.id.text);
+        text2 = itemView.findViewById(R.id.text2);
 
         image = itemView.findViewById(R.id.image);
-        playerImage = itemView.findViewById(R.id.player_image);
         time = itemView.findViewById(R.id.time);
 
         imageText = itemView.findViewById(R.id.imageText);
-        imageContainer = itemView.findViewById(R.id.imageContainer);
         imageTextContainer = itemView.findViewById(R.id.imageTextContainer);
         imageContainerCard = itemView.findViewById(R.id.imageContainerCard);
+        imageContainer = itemView.findViewById(R.id.imageContainer);
 
         menu = itemView.findViewById(R.id.menu);
         dragView = itemView.findViewById(R.id.drag_view);
         paletteColorContainer = itemView.findViewById(R.id.paletteColorContainer);
-        recyclerView = itemView.findViewById(R.id.recycler_view);
         mask = itemView.findViewById(R.id.mask);
-        playSongs = itemView.findViewById(R.id.playSongs);
         dummyContainer = itemView.findViewById(R.id.dummy_view);
 
         if (imageContainerCard != null) {
@@ -110,6 +101,7 @@ public class MediaEntryViewHolder extends AbstractDraggableSwipeableItemViewHold
         itemView.setOnLongClickListener(this);
     }
 
+    @Nullable
     @Override
     public View getSwipeableContainerView() {
         return null;
@@ -117,7 +109,6 @@ public class MediaEntryViewHolder extends AbstractDraggableSwipeableItemViewHold
 
     @Override
     public void onClick(View v) {
-
     }
 
     @Override
@@ -126,11 +117,12 @@ public class MediaEntryViewHolder extends AbstractDraggableSwipeableItemViewHold
     }
 
     public void setImageTransitionName(@NonNull String transitionName) {
-        if (imageContainerCard != null) {
-            imageContainerCard.setTransitionName(transitionName);
-        }
-        if (image != null) {
-            image.setTransitionName(transitionName);
-        }
+        itemView.setTransitionName(transitionName);
+    /* if (imageContainerCard != null) {
+        imageContainerCard.setTransitionName(transitionName);
+    }
+    if (image != null) {
+        image.setTransitionName(transitionName);
+    }*/
     }
 }

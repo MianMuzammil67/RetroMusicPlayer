@@ -1,20 +1,50 @@
+/*
+ * Copyright (c) 2020 Hemanth Savarla.
+ *
+ * Licensed under the GNU General Public License v3
+ *
+ * This is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU General Public License for more details.
+ *
+ */
 package code.name.monkey.retromusic.activities.base
 
 import android.Manifest
 import android.content.*
 import android.os.Bundle
 import android.os.IBinder
+import androidx.core.content.ContextCompat
+import androidx.lifecycle.lifecycleScope
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import code.name.monkey.appthemehelper.util.VersionUtils
 import code.name.monkey.retromusic.R
+import code.name.monkey.retromusic.db.toPlayCount
 import code.name.monkey.retromusic.helper.MusicPlayerRemote
-import code.name.monkey.retromusic.interfaces.MusicServiceEventListener
-import code.name.monkey.retromusic.service.MusicService.*
+import code.name.monkey.retromusic.interfaces.IMusicServiceEventListener
+import code.name.monkey.retromusic.repository.RealRepository
+import code.name.monkey.retromusic.service.MusicService.Companion.FAVORITE_STATE_CHANGED
+import code.name.monkey.retromusic.service.MusicService.Companion.MEDIA_STORE_CHANGED
+import code.name.monkey.retromusic.service.MusicService.Companion.META_CHANGED
+import code.name.monkey.retromusic.service.MusicService.Companion.PLAY_STATE_CHANGED
+import code.name.monkey.retromusic.service.MusicService.Companion.QUEUE_CHANGED
+import code.name.monkey.retromusic.service.MusicService.Companion.REPEAT_MODE_CHANGED
+import code.name.monkey.retromusic.service.MusicService.Companion.SHUFFLE_MODE_CHANGED
+import code.name.monkey.retromusic.util.PreferenceUtil
+import code.name.monkey.retromusic.util.logD
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import org.koin.android.ext.android.inject
 import java.lang.ref.WeakReference
-import java.util.*
 
-abstract class AbsMusicServiceActivity : AbsBaseActivity(), MusicServiceEventListener {
+abstract class AbsMusicServiceActivity : AbsBaseActivity(), IMusicServiceEventListener {
 
-    private val mMusicServiceEventListeners = ArrayList<MusicServiceEventListener>()
-
+    private val mMusicServiceEventListeners = ArrayList<IMusicServiceEventListener>()
+    private val repository: RealRepository by inject()
     private var serviceToken: MusicPlayerRemote.ServiceToken? = null
     private var musicStateReceiver: MusicStateReceiver? = null
     private var receiverRegistered: Boolean = false
@@ -37,21 +67,21 @@ abstract class AbsMusicServiceActivity : AbsBaseActivity(), MusicServiceEventLis
     override fun onDestroy() {
         super.onDestroy()
         MusicPlayerRemote.unbindFromService(serviceToken)
-        if (receiverRegistered) {
-            unregisterReceiver(musicStateReceiver)
+        if (receiverRegistered && musicStateReceiver != null) {
+            LocalBroadcastManager.getInstance(this).unregisterReceiver(musicStateReceiver!!)
             receiverRegistered = false
         }
     }
 
-    fun addMusicServiceEventListener(listener: MusicServiceEventListener?) {
-        if (listener != null) {
-            mMusicServiceEventListeners.add(listener)
+    fun addMusicServiceEventListener(listenerI: IMusicServiceEventListener?) {
+        if (listenerI != null) {
+            mMusicServiceEventListeners.add(listenerI)
         }
     }
 
-    fun removeMusicServiceEventListener(listener: MusicServiceEventListener?) {
-        if (listener != null) {
-            mMusicServiceEventListeners.remove(listener)
+    fun removeMusicServiceEventListener(listenerI: IMusicServiceEventListener?) {
+        if (listenerI != null) {
+            mMusicServiceEventListeners.remove(listenerI)
         }
     }
 
@@ -68,8 +98,7 @@ abstract class AbsMusicServiceActivity : AbsBaseActivity(), MusicServiceEventLis
             filter.addAction(MEDIA_STORE_CHANGED)
             filter.addAction(FAVORITE_STATE_CHANGED)
 
-            registerReceiver(musicStateReceiver, filter)
-
+            LocalBroadcastManager.getInstance(this).registerReceiver(musicStateReceiver!!, filter)
             receiverRegistered = true
         }
 
@@ -79,8 +108,8 @@ abstract class AbsMusicServiceActivity : AbsBaseActivity(), MusicServiceEventLis
     }
 
     override fun onServiceDisconnected() {
-        if (receiverRegistered) {
-            unregisterReceiver(musicStateReceiver)
+        if (receiverRegistered && musicStateReceiver != null) {
+            LocalBroadcastManager.getInstance(this).unregisterReceiver(musicStateReceiver!!)
             receiverRegistered = false
         }
 
@@ -92,6 +121,16 @@ abstract class AbsMusicServiceActivity : AbsBaseActivity(), MusicServiceEventLis
     override fun onPlayingMetaChanged() {
         for (listener in mMusicServiceEventListeners) {
             listener.onPlayingMetaChanged()
+        }
+        lifecycleScope.launch(Dispatchers.IO) {
+            if (!PreferenceUtil.pauseHistory) {
+                repository.upsertSongInHistory(MusicPlayerRemote.currentSong)
+            }
+            val song = repository.findSongExistInPlayCount(MusicPlayerRemote.currentSong.id)
+                ?.apply { playCount += 1 }
+                ?: MusicPlayerRemote.currentSong.toPlayCount()
+
+            repository.upsertSongInPlayCount(song)
         }
     }
 
@@ -125,6 +164,12 @@ abstract class AbsMusicServiceActivity : AbsBaseActivity(), MusicServiceEventLis
         }
     }
 
+    override fun onFavoriteStateChanged() {
+        for (listener in mMusicServiceEventListeners) {
+            listener.onFavoriteStateChanged()
+        }
+    }
+
     override fun onHasPermissionsChanged(hasPermissions: Boolean) {
         super.onHasPermissionsChanged(hasPermissions)
         val intent = Intent(MEDIA_STORE_CHANGED)
@@ -132,15 +177,22 @@ abstract class AbsMusicServiceActivity : AbsBaseActivity(), MusicServiceEventLis
             "from_permissions_changed",
             true
         ) // just in case we need to know this at some point
-        sendBroadcast(intent)
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
+        logD("sendBroadcast $hasPermissions")
     }
 
     override fun getPermissionsToRequest(): Array<String> {
-        return arrayOf(
-            Manifest.permission.READ_EXTERNAL_STORAGE,
-            Manifest.permission.WRITE_EXTERNAL_STORAGE,
-            Manifest.permission.BLUETOOTH
-        )
+        return mutableListOf<String>().apply {
+            if (VersionUtils.hasT()) {
+                add(Manifest.permission.READ_MEDIA_AUDIO)
+                add(Manifest.permission.POST_NOTIFICATIONS)
+            } else {
+                add(Manifest.permission.READ_EXTERNAL_STORAGE)
+            }
+            if (!VersionUtils.hasR()) {
+                add(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+            }
+        }.toTypedArray()
     }
 
     private class MusicStateReceiver(activity: AbsMusicServiceActivity) : BroadcastReceiver() {
@@ -152,7 +204,8 @@ abstract class AbsMusicServiceActivity : AbsBaseActivity(), MusicServiceEventLis
             val activity = reference.get()
             if (activity != null && action != null) {
                 when (action) {
-                    FAVORITE_STATE_CHANGED, META_CHANGED -> activity.onPlayingMetaChanged()
+                    FAVORITE_STATE_CHANGED -> activity.onFavoriteStateChanged()
+                    META_CHANGED -> activity.onPlayingMetaChanged()
                     QUEUE_CHANGED -> activity.onQueueChanged()
                     PLAY_STATE_CHANGED -> activity.onPlayStateChanged()
                     REPEAT_MODE_CHANGED -> activity.onRepeatModeChanged()

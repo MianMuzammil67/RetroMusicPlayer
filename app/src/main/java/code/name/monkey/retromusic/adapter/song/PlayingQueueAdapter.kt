@@ -1,11 +1,26 @@
+/*
+ * Copyright (c) 2020 Hemanth Savarla.
+ *
+ * Licensed under the GNU General Public License v3
+ *
+ * This is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU General Public License for more details.
+ *
+ */
 package code.name.monkey.retromusic.adapter.song
 
-import android.graphics.PorterDuff.Mode
 import android.view.MenuItem
 import android.view.View
-import android.widget.ImageView
-import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.isVisible
+import androidx.fragment.app.FragmentActivity
 import code.name.monkey.retromusic.R
+import code.name.monkey.retromusic.glide.RetroGlideExtension
+import code.name.monkey.retromusic.glide.RetroGlideExtension.songCoverOptions
 import code.name.monkey.retromusic.helper.MusicPlayerRemote
 import code.name.monkey.retromusic.helper.MusicPlayerRemote.isPlaying
 import code.name.monkey.retromusic.helper.MusicPlayerRemote.playNextSong
@@ -13,6 +28,7 @@ import code.name.monkey.retromusic.helper.MusicPlayerRemote.removeFromQueue
 import code.name.monkey.retromusic.model.Song
 import code.name.monkey.retromusic.util.MusicUtil
 import code.name.monkey.retromusic.util.ViewUtil
+import com.bumptech.glide.Glide
 import com.h6ah4i.android.widget.advrecyclerview.draggable.DraggableItemAdapter
 import com.h6ah4i.android.widget.advrecyclerview.draggable.ItemDraggableRange
 import com.h6ah4i.android.widget.advrecyclerview.draggable.annotation.DraggableItemStateFlags
@@ -21,22 +37,18 @@ import com.h6ah4i.android.widget.advrecyclerview.swipeable.SwipeableItemConstant
 import com.h6ah4i.android.widget.advrecyclerview.swipeable.action.SwipeResultAction
 import com.h6ah4i.android.widget.advrecyclerview.swipeable.action.SwipeResultActionDefault
 import com.h6ah4i.android.widget.advrecyclerview.swipeable.action.SwipeResultActionRemoveItem
-import com.h6ah4i.android.widget.advrecyclerview.swipeable.annotation.SwipeableItemResults
 import me.zhanghai.android.fastscroll.PopupTextProvider
-import java.util.*
 
 class PlayingQueueAdapter(
-    activity: AppCompatActivity,
-    dataSet: ArrayList<Song>,
+    activity: FragmentActivity,
+    dataSet: MutableList<Song>,
     private var current: Int,
-    itemLayoutRes: Int
-) : SongAdapter(
-    activity, dataSet, itemLayoutRes, null
-), DraggableItemAdapter<PlayingQueueAdapter.ViewHolder>,
+    itemLayoutRes: Int,
+) : SongAdapter(activity, dataSet, itemLayoutRes),
+    DraggableItemAdapter<PlayingQueueAdapter.ViewHolder>,
     SwipeableItemAdapter<PlayingQueueAdapter.ViewHolder>,
     PopupTextProvider {
 
-    private var color = -1
     private var songToRemove: Song? = null
 
     override fun createViewHolder(view: View): SongAdapter.ViewHolder {
@@ -45,27 +57,10 @@ class PlayingQueueAdapter(
 
     override fun onBindViewHolder(holder: SongAdapter.ViewHolder, position: Int) {
         super.onBindViewHolder(holder, position)
-        holder.imageText?.text = (position - current).toString()
-        holder.time?.text = MusicUtil.getReadableDurationString(dataSet[position].duration)
+        val song = dataSet[position]
+        holder.time?.text = MusicUtil.getReadableDurationString(song.duration)
         if (holder.itemViewType == HISTORY || holder.itemViewType == CURRENT) {
             setAlpha(holder, 0.5f)
-        }
-    }
-
-    private fun setColor(holder: SongAdapter.ViewHolder, white: Int) {
-
-        if (holder.title != null) {
-            holder.title!!.setTextColor(white)
-            if (color != -1) {
-                holder.title!!.setTextColor(color)
-            }
-        }
-
-        holder.text?.setTextColor(white)
-        holder.time?.setTextColor(white)
-        holder.imageText?.setTextColor(white)
-        if (holder.menu != null) {
-            (holder.menu as ImageView).setColorFilter(white, Mode.SRC_IN)
         }
     }
 
@@ -79,11 +74,17 @@ class PlayingQueueAdapter(
     }
 
     override fun loadAlbumCover(song: Song, holder: SongAdapter.ViewHolder) {
-        // We don't want to load it in this adapter
+        if (holder.image == null) {
+            return
+        }
+        Glide.with(activity)
+            .load(RetroGlideExtension.getSongModel(song))
+            .songCoverOptions(song)
+            .into(holder.image!!)
     }
 
-    fun swapDataSet(dataSet: ArrayList<Song>, position: Int) {
-        this.dataSet = dataSet
+    fun swapDataSet(dataSet: List<Song>, position: Int) {
+        this.dataSet = dataSet.toMutableList()
         current = position
         notifyDataSetChanged()
     }
@@ -97,7 +98,6 @@ class PlayingQueueAdapter(
         holder.image?.alpha = alpha
         holder.title?.alpha = alpha
         holder.text?.alpha = alpha
-        holder.imageText?.alpha = alpha
         holder.paletteColorContainer?.alpha = alpha
         holder.dragView?.alpha = alpha
         holder.menu?.alpha = alpha
@@ -140,7 +140,6 @@ class PlayingQueueAdapter(
     }
 
     inner class ViewHolder(itemView: View) : SongAdapter.ViewHolder(itemView) {
-
         @DraggableItemStateFlags
         private var mDragStateFlags: Int = 0
 
@@ -151,8 +150,15 @@ class PlayingQueueAdapter(
             }
 
         init {
-            imageText?.visibility = View.VISIBLE
-            dragView?.visibility = View.VISIBLE
+            dragView?.isVisible = true
+        }
+
+        override fun onClick(v: View?) {
+            if (isInQuickSelectMode) {
+                toggleChecked(layoutPosition)
+            } else {
+                MusicPlayerRemote.playSongAt(layoutPosition)
+            }
         }
 
         override fun onSongMenuItemClick(item: MenuItem): Boolean {
@@ -174,8 +180,8 @@ class PlayingQueueAdapter(
             mDragStateFlags = flags
         }
 
-        override fun getSwipeableContainerView(): View? {
-            return dummyContainer
+        override fun getSwipeableContainerView(): View {
+            return dummyContainer!!
         }
     }
 
@@ -186,52 +192,46 @@ class PlayingQueueAdapter(
         private const val UP_NEXT = 2
     }
 
-    override fun onSwipeItem(
-        holder: ViewHolder?,
-        position: Int, @SwipeableItemResults result: Int
-    ): SwipeResultAction {
-        return if (result === SwipeableItemConstants.RESULT_CANCELED) {
+    override fun onSwipeItem(holder: ViewHolder, position: Int, result: Int): SwipeResultAction {
+        return if (result == SwipeableItemConstants.RESULT_CANCELED) {
             SwipeResultActionDefault()
         } else {
-            SwipedResultActionRemoveItem(this, position, activity)
+            SwipedResultActionRemoveItem(this, position)
         }
     }
 
-    override fun onGetSwipeReactionType(holder: ViewHolder?, position: Int, x: Int, y: Int): Int {
-        return if (onCheckCanStartDrag(holder!!, position, x, y)) {
+    override fun onGetSwipeReactionType(holder: ViewHolder, position: Int, x: Int, y: Int): Int {
+        return if (onCheckCanStartDrag(holder, position, x, y)) {
             SwipeableItemConstants.REACTION_CAN_NOT_SWIPE_BOTH_H
         } else {
             SwipeableItemConstants.REACTION_CAN_SWIPE_BOTH_H
         }
     }
 
-    override fun onSwipeItemStarted(p0: ViewHolder?, p1: Int) {
+    override fun onSwipeItemStarted(holder: ViewHolder, p1: Int) {
     }
 
-    override fun onSetSwipeBackground(holder: ViewHolder?, position: Int, result: Int) {
+    override fun onSetSwipeBackground(holder: ViewHolder, position: Int, result: Int) {
     }
 
     internal class SwipedResultActionRemoveItem(
         private val adapter: PlayingQueueAdapter,
         private val position: Int,
-        private val activity: AppCompatActivity
     ) : SwipeResultActionRemoveItem() {
 
         private var songToRemove: Song? = null
-        private val isPlaying: Boolean = MusicPlayerRemote.isPlaying
-        private val songProgressMillis = 0
         override fun onPerformAction() {
-            //currentlyShownSnackbar = null
+            // currentlyShownSnackbar = null
         }
 
         override fun onSlideAnimationEnd() {
-            //initializeSnackBar(adapter, position, activity, isPlaying)
+            // initializeSnackBar(adapter, position, activity, isPlaying)
             songToRemove = adapter.dataSet[position]
-            //If song removed was the playing song, then play the next song
+            // If song removed was the playing song, then play the next song
             if (isPlaying(songToRemove!!)) {
                 playNextSong()
             }
-            //Swipe animation is much smoother when we do the heavy lifting after it's completed
+            // Swipe animation is much smoother when we do the heavy lifting after it's completed
             adapter.setSongToRemove(songToRemove!!)
             removeFromQueue(songToRemove!!)
         }

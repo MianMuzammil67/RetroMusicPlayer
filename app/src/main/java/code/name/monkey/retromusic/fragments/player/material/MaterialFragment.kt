@@ -1,27 +1,49 @@
+/*
+ * Copyright (c) 2020 Hemanth Savarla.
+ *
+ * Licensed under the GNU General Public License v3
+ *
+ * This is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU General Public License for more details.
+ *
+ */
 package code.name.monkey.retromusic.fragments.player.material
 
+import android.animation.ArgbEvaluator
+import android.animation.ValueAnimator
+import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
-import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
 import androidx.appcompat.widget.Toolbar
-import code.name.monkey.appthemehelper.util.ATHUtil
 import code.name.monkey.appthemehelper.util.ToolbarContentTintHelper
 import code.name.monkey.retromusic.R
+import code.name.monkey.retromusic.databinding.FragmentMaterialBinding
+import code.name.monkey.retromusic.extensions.colorControlNormal
+import code.name.monkey.retromusic.extensions.drawAboveSystemBars
+import code.name.monkey.retromusic.extensions.surfaceColor
+import code.name.monkey.retromusic.extensions.whichFragment
 import code.name.monkey.retromusic.fragments.base.AbsPlayerFragment
 import code.name.monkey.retromusic.fragments.player.PlayerAlbumCoverFragment
 import code.name.monkey.retromusic.fragments.player.normal.PlayerFragment
 import code.name.monkey.retromusic.helper.MusicPlayerRemote
 import code.name.monkey.retromusic.model.Song
-import kotlinx.android.synthetic.main.fragment_material.*
+import code.name.monkey.retromusic.util.PreferenceUtil
+import code.name.monkey.retromusic.util.ViewUtil
+import code.name.monkey.retromusic.util.color.MediaNotificationProcessor
+import code.name.monkey.retromusic.views.DrawableGradient
 
 /**
  * @author Hemanth S (h4h13).
  */
-class MaterialFragment : AbsPlayerFragment() {
+class MaterialFragment : AbsPlayerFragment(R.layout.fragment_material) {
 
     override fun playerToolbar(): Toolbar {
-        return playerToolbar
+        return binding.playerToolbar
     }
 
     private var lastColor: Int = 0
@@ -31,33 +53,61 @@ class MaterialFragment : AbsPlayerFragment() {
 
     private lateinit var playbackControlsFragment: MaterialControlsFragment
 
+    private var _binding: FragmentMaterialBinding? = null
+    private val binding get() = _binding!!
+
+    private var valueAnimator: ValueAnimator? = null
+
+    private fun colorize(i: Int) {
+        if (valueAnimator != null) {
+            valueAnimator?.cancel()
+        }
+
+        valueAnimator = ValueAnimator.ofObject(
+            ArgbEvaluator(),
+            surfaceColor(),
+            i
+        )
+        valueAnimator?.addUpdateListener { animation ->
+            if (isAdded) {
+                val drawable = DrawableGradient(
+                    GradientDrawable.Orientation.TOP_BOTTOM,
+                    intArrayOf(
+                        animation.animatedValue as Int,
+                        surfaceColor()
+                    ), 0
+                )
+                binding.colorGradientBackground.background = drawable
+            }
+        }
+        valueAnimator?.setDuration(ViewUtil.RETRO_MUSIC_ANIM_TIME.toLong())?.start()
+    }
+
+
     override fun onShow() {
         playbackControlsFragment.show()
     }
 
     override fun onHide() {
         playbackControlsFragment.hide()
-        onBackPressed()
     }
 
-    override fun onBackPressed(): Boolean {
-        return false
-    }
+    override fun toolbarIconColor() = colorControlNormal()
 
-    override fun toolbarIconColor(): Int {
-        return ATHUtil.resolveColor(requireContext(), R.attr.colorControlNormal)
-    }
-
-    override fun onColorChanged(color: Int) {
-        playbackControlsFragment.setDark(color)
-        lastColor = color
-        callbacks?.onPaletteColorChanged()
+    override fun onColorChanged(color: MediaNotificationProcessor) {
+        playbackControlsFragment.setColor(color)
+        lastColor = color.backgroundColor
+        libraryViewModel.updateColor(color.backgroundColor)
 
         ToolbarContentTintHelper.colorizeToolbar(
-            playerToolbar,
-            ATHUtil.resolveColor(requireContext(), R.attr.colorControlNormal),
+            binding.playerToolbar,
+            colorControlNormal(),
             requireActivity()
         )
+
+        if (PreferenceUtil.isAdaptiveColor) {
+            colorize(color.backgroundColor)
+        }
     }
 
     override fun toggleFavorite(song: Song) {
@@ -71,35 +121,29 @@ class MaterialFragment : AbsPlayerFragment() {
         toggleFavorite(MusicPlayerRemote.currentSong)
     }
 
-    override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View? {
-        return inflater.inflate(R.layout.fragment_material, container, false)
-    }
-
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        _binding = FragmentMaterialBinding.bind(view)
         setUpSubFragments()
         setUpPlayerToolbar()
+        playerToolbar().drawAboveSystemBars()
     }
 
     private fun setUpSubFragments() {
-        playbackControlsFragment =
-            childFragmentManager.findFragmentById(R.id.playbackControlsFragment) as MaterialControlsFragment
-        val playerAlbumCoverFragment =
-            childFragmentManager.findFragmentById(R.id.playerAlbumCoverFragment) as PlayerAlbumCoverFragment
+        playbackControlsFragment = whichFragment(R.id.playbackControlsFragment)
+        val playerAlbumCoverFragment: PlayerAlbumCoverFragment =
+            whichFragment(R.id.playerAlbumCoverFragment)
         playerAlbumCoverFragment.setCallbacks(this)
     }
 
     private fun setUpPlayerToolbar() {
-        playerToolbar.apply {
+        binding.playerToolbar.apply {
             inflateMenu(R.menu.menu_player)
-            setNavigationOnClickListener { requireActivity().onBackPressed() }
+            setNavigationOnClickListener { requireActivity().onBackPressedDispatcher.onBackPressed() }
             setOnMenuItemClickListener(this@MaterialFragment)
             ToolbarContentTintHelper.colorizeToolbar(
                 this,
-                ATHUtil.resolveColor(context, R.attr.colorControlNormal),
+                colorControlNormal(),
                 requireActivity()
             )
         }
@@ -118,5 +162,10 @@ class MaterialFragment : AbsPlayerFragment() {
         fun newInstance(): PlayerFragment {
             return PlayerFragment()
         }
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 }

@@ -38,8 +38,6 @@ obj/
 captures
 app/normal/release/
 /models/
+/app/release/
 
-app/font/
-app/src/debug/ 
-/app/nofont/
-/crowdin.properties
+.kotlin

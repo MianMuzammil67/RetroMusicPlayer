@@ -1,30 +1,26 @@
 package code.name.monkey.appthemehelper
 
-import android.annotation.SuppressLint
 import android.content.Context
 import android.content.SharedPreferences
 import android.graphics.Color
-import androidx.annotation.AttrRes
-import androidx.annotation.CheckResult
-import androidx.annotation.ColorInt
-import androidx.annotation.ColorRes
+import androidx.annotation.*
 import androidx.annotation.IntRange
-import androidx.annotation.StyleRes
 import androidx.core.content.ContextCompat
-import code.name.monkey.appthemehelper.util.ATHUtil
+import androidx.core.content.edit
+import androidx.preference.PreferenceManager
+import code.name.monkey.appthemehelper.util.ATHUtil.isWindowBackgroundDark
+import code.name.monkey.appthemehelper.util.ATHUtil.resolveColor
 import code.name.monkey.appthemehelper.util.ColorUtil
+import code.name.monkey.appthemehelper.util.VersionUtils
+
 
 /**
  * @author Aidan Follestad (afollestad), Karim Abou Zeid (kabouzeid)
  */
-class ThemeStore @SuppressLint("CommitPrefEdits")
+class ThemeStore
 private constructor(private val mContext: Context) : ThemeStorePrefKeys, ThemeStoreInterface {
 
-    private val mEditor: SharedPreferences.Editor
-
-    init {
-        mEditor = prefs(mContext).edit()
-    }
+    private val mEditor: SharedPreferences.Editor = prefs(mContext).edit()
 
     override fun activityTheme(@StyleRes theme: Int): ThemeStore {
         mEditor.putInt(ThemeStorePrefKeys.KEY_ACTIVITY_THEME, theme)
@@ -43,7 +39,7 @@ private constructor(private val mContext: Context) : ThemeStorePrefKeys, ThemeSt
     }
 
     override fun primaryColorAttr(@AttrRes colorAttr: Int): ThemeStore {
-        return primaryColor(ATHUtil.resolveColor(mContext, colorAttr))
+        return primaryColor(resolveColor(mContext, colorAttr))
     }
 
     override fun primaryColorDark(@ColorInt color: Int): ThemeStore {
@@ -56,11 +52,34 @@ private constructor(private val mContext: Context) : ThemeStorePrefKeys, ThemeSt
     }
 
     override fun primaryColorDarkAttr(@AttrRes colorAttr: Int): ThemeStore {
-        return primaryColorDark(ATHUtil.resolveColor(mContext, colorAttr))
+        return primaryColorDark(resolveColor(mContext, colorAttr))
     }
 
     override fun accentColor(@ColorInt color: Int): ThemeStore {
         mEditor.putInt(ThemeStorePrefKeys.KEY_ACCENT_COLOR, color)
+        return this
+    }
+
+    override fun wallpaperColor(context: Context, color: Int): ThemeStore {
+        if (ColorUtil.isColorLight(color)) {
+            mEditor.putInt(ThemeStorePrefKeys.KEY_WALLPAPER_COLOR_DARK, color)
+            mEditor.putInt(
+                ThemeStorePrefKeys.KEY_WALLPAPER_COLOR_LIGHT,
+                ColorUtil.getReadableColorLight(
+                    color,
+                    Color.WHITE
+                )
+            )
+        } else {
+            mEditor.putInt(ThemeStorePrefKeys.KEY_WALLPAPER_COLOR_LIGHT, color)
+            mEditor.putInt(
+                ThemeStorePrefKeys.KEY_WALLPAPER_COLOR_DARK,
+                ColorUtil.getReadableColorDark(
+                    color,
+                    Color.parseColor("#202124")
+                )
+            )
+        }
         return this
     }
 
@@ -69,7 +88,7 @@ private constructor(private val mContext: Context) : ThemeStorePrefKeys, ThemeSt
     }
 
     override fun accentColorAttr(@AttrRes colorAttr: Int): ThemeStore {
-        return accentColor(ATHUtil.resolveColor(mContext, colorAttr))
+        return accentColor(resolveColor(mContext, colorAttr))
     }
 
     override fun statusBarColor(@ColorInt color: Int): ThemeStore {
@@ -82,7 +101,7 @@ private constructor(private val mContext: Context) : ThemeStorePrefKeys, ThemeSt
     }
 
     override fun statusBarColorAttr(@AttrRes colorAttr: Int): ThemeStore {
-        return statusBarColor(ATHUtil.resolveColor(mContext, colorAttr))
+        return statusBarColor(resolveColor(mContext, colorAttr))
     }
 
     override fun navigationBarColor(@ColorInt color: Int): ThemeStore {
@@ -99,7 +118,7 @@ private constructor(private val mContext: Context) : ThemeStorePrefKeys, ThemeSt
     // Static getters
 
     override fun navigationBarColorAttr(@AttrRes colorAttr: Int): ThemeStore {
-        return navigationBarColor(ATHUtil.resolveColor(mContext, colorAttr))
+        return navigationBarColor(resolveColor(mContext, colorAttr))
     }
 
     override fun textColorPrimary(@ColorInt color: Int): ThemeStore {
@@ -112,7 +131,7 @@ private constructor(private val mContext: Context) : ThemeStorePrefKeys, ThemeSt
     }
 
     override fun textColorPrimaryAttr(@AttrRes colorAttr: Int): ThemeStore {
-        return textColorPrimary(ATHUtil.resolveColor(mContext, colorAttr))
+        return textColorPrimary(resolveColor(mContext, colorAttr))
     }
 
     override fun textColorPrimaryInverse(@ColorInt color: Int): ThemeStore {
@@ -125,7 +144,7 @@ private constructor(private val mContext: Context) : ThemeStorePrefKeys, ThemeSt
     }
 
     override fun textColorPrimaryInverseAttr(@AttrRes colorAttr: Int): ThemeStore {
-        return textColorPrimaryInverse(ATHUtil.resolveColor(mContext, colorAttr))
+        return textColorPrimaryInverse(resolveColor(mContext, colorAttr))
     }
 
     override fun textColorSecondary(@ColorInt color: Int): ThemeStore {
@@ -138,7 +157,7 @@ private constructor(private val mContext: Context) : ThemeStorePrefKeys, ThemeSt
     }
 
     override fun textColorSecondaryAttr(@AttrRes colorAttr: Int): ThemeStore {
-        return textColorSecondary(ATHUtil.resolveColor(mContext, colorAttr))
+        return textColorSecondary(resolveColor(mContext, colorAttr))
     }
 
     override fun textColorSecondaryInverse(@ColorInt color: Int): ThemeStore {
@@ -151,7 +170,7 @@ private constructor(private val mContext: Context) : ThemeStorePrefKeys, ThemeSt
     }
 
     override fun textColorSecondaryInverseAttr(@AttrRes colorAttr: Int): ThemeStore {
-        return textColorSecondaryInverse(ATHUtil.resolveColor(mContext, colorAttr))
+        return textColorSecondaryInverse(resolveColor(mContext, colorAttr))
     }
 
     override fun coloredStatusBar(colored: Boolean): ThemeStore {
@@ -183,7 +202,10 @@ private constructor(private val mContext: Context) : ThemeStorePrefKeys, ThemeSt
 
         @CheckResult
         fun prefs(context: Context): SharedPreferences {
-            return context.getSharedPreferences(ThemeStorePrefKeys.CONFIG_PREFS_KEY_DEFAULT, Context.MODE_PRIVATE)
+            return context.getSharedPreferences(
+                ThemeStorePrefKeys.CONFIG_PREFS_KEY_DEFAULT,
+                Context.MODE_PRIVATE
+            )
         }
 
         fun markChanged(context: Context) {
@@ -201,19 +223,27 @@ private constructor(private val mContext: Context) : ThemeStorePrefKeys, ThemeSt
         fun primaryColor(context: Context): Int {
             return prefs(context).getInt(
                 ThemeStorePrefKeys.KEY_PRIMARY_COLOR,
-                ATHUtil.resolveColor(context, R.attr.colorPrimary, Color.parseColor("#455A64"))
+                resolveColor(context, androidx.appcompat.R.attr.colorPrimary, Color.parseColor("#455A64"))
             )
         }
 
         @CheckResult
         @ColorInt
         fun accentColor(context: Context): Int {
+            // Set MD3 accent if MD3 is enabled or in-app accent otherwise
+            if (isMD3Enabled(context) && VersionUtils.hasS()) {
+                return ContextCompat.getColor(context, R.color.m3_accent_color)
+            }
             val desaturatedColor = prefs(context).getBoolean("desaturated_color", false)
-            val color = prefs(context).getInt(
-                ThemeStorePrefKeys.KEY_ACCENT_COLOR,
-                ATHUtil.resolveColor(context, R.attr.colorAccent, Color.parseColor("#263238"))
-            )
-            return if (ATHUtil.isWindowBackgroundDark(context) && desaturatedColor) ColorUtil.desaturateColor(
+            val color = if (isWallpaperAccentEnabled(context)) {
+                wallpaperColor(context, isWindowBackgroundDark(context))
+            } else {
+                prefs(context).getInt(
+                    ThemeStorePrefKeys.KEY_ACCENT_COLOR,
+                    resolveColor(context, androidx.appcompat.R.attr.colorAccent, Color.parseColor("#263238"))
+                )
+            }
+            return if (isWindowBackgroundDark(context) && desaturatedColor) ColorUtil.desaturateColor(
                 color,
                 0.4f
             ) else color
@@ -221,15 +251,30 @@ private constructor(private val mContext: Context) : ThemeStorePrefKeys, ThemeSt
 
         @CheckResult
         @ColorInt
+        fun wallpaperColor(context: Context, isDarkMode: Boolean): Int {
+            return prefs(context).getInt(
+                if (isDarkMode) ThemeStorePrefKeys.KEY_WALLPAPER_COLOR_DARK else ThemeStorePrefKeys.KEY_WALLPAPER_COLOR_LIGHT,
+                resolveColor(context, androidx.appcompat.R.attr.colorAccent, Color.parseColor("#263238"))
+            )
+        }
+
+        @CheckResult
+        @ColorInt
         fun navigationBarColor(context: Context): Int {
             return if (!coloredNavigationBar(context)) {
                 Color.BLACK
-            } else prefs(context).getInt(ThemeStorePrefKeys.KEY_NAVIGATION_BAR_COLOR, primaryColor(context))
+            } else prefs(context).getInt(
+                ThemeStorePrefKeys.KEY_NAVIGATION_BAR_COLOR,
+                primaryColor(context)
+            )
         }
 
         @CheckResult
         fun coloredStatusBar(context: Context): Boolean {
-            return prefs(context).getBoolean(ThemeStorePrefKeys.KEY_APPLY_PRIMARYDARK_STATUSBAR, true)
+            return prefs(context).getBoolean(
+                ThemeStorePrefKeys.KEY_APPLY_PRIMARYDARK_STATUSBAR,
+                true
+            )
         }
 
         @CheckResult
@@ -247,7 +292,42 @@ private constructor(private val mContext: Context) : ThemeStorePrefKeys, ThemeSt
             return prefs(context).getBoolean(ThemeStorePrefKeys.IS_CONFIGURED_KEY, false)
         }
 
-        @SuppressLint("CommitPrefEdits")
+        @CheckResult
+        @ColorInt
+        fun textColorPrimary(context: Context): Int {
+            return prefs(context).getInt(
+                ThemeStorePrefKeys.KEY_TEXT_COLOR_PRIMARY,
+                resolveColor(context, android.R.attr.textColorPrimary)
+            )
+        }
+
+        @CheckResult
+        @ColorInt
+        fun textColorPrimaryInverse(context: Context): Int {
+            return prefs(context).getInt(
+                ThemeStorePrefKeys.KEY_TEXT_COLOR_PRIMARY_INVERSE,
+                resolveColor(context, android.R.attr.textColorPrimaryInverse)
+            )
+        }
+
+        @CheckResult
+        @ColorInt
+        fun textColorSecondary(context: Context): Int {
+            return prefs(context).getInt(
+                ThemeStorePrefKeys.KEY_TEXT_COLOR_SECONDARY,
+                resolveColor(context, android.R.attr.textColorSecondary)
+            )
+        }
+
+        @CheckResult
+        @ColorInt
+        fun textColorSecondaryInverse(context: Context): Int {
+            return prefs(context).getInt(
+                ThemeStorePrefKeys.KEY_TEXT_COLOR_SECONDARY_INVERSE,
+                resolveColor(context, android.R.attr.textColorSecondaryInverse)
+            )
+        }
+
         fun isConfigured(
             context: Context, @IntRange(
                 from = 0,
@@ -257,10 +337,20 @@ private constructor(private val mContext: Context) : ThemeStorePrefKeys, ThemeSt
             val prefs = prefs(context)
             val lastVersion = prefs.getInt(ThemeStorePrefKeys.IS_CONFIGURED_VERSION_KEY, -1)
             if (version > lastVersion) {
-                prefs.edit().putInt(ThemeStorePrefKeys.IS_CONFIGURED_VERSION_KEY, version).commit()
+                prefs.edit { putInt(ThemeStorePrefKeys.IS_CONFIGURED_VERSION_KEY, version) }
                 return false
             }
             return true
+        }
+
+        fun isMD3Enabled(context: Context): Boolean {
+            return PreferenceManager.getDefaultSharedPreferences(context)
+                .getBoolean(ThemeStorePrefKeys.KEY_MATERIAL_YOU, VersionUtils.hasS())
+        }
+
+        private fun isWallpaperAccentEnabled(context: Context): Boolean {
+            return PreferenceManager.getDefaultSharedPreferences(context)
+                .getBoolean("wallpaper_accent", false)
         }
     }
 }

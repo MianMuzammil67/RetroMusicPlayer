@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <array name="pref_album_cover_transform_entities">
+    <array name="pref_album_cover_transform_entries">
         <item>@string/normal</item>
         <item>@string/cascading</item>
         <item>@string/depth</item>
@@ -8,6 +8,7 @@
         <item>@string/horizontal_flip</item>
         <item>@string/hinge</item>
         <item>@string/stack</item>
+        <item>@string/simple</item>
     </array>
 
     <string-array name="pref_album_cover_transform_values">
@@ -18,7 +19,18 @@
         <item>4</item>
         <item>5</item>
         <item>6</item>
+        <item>7</item>
     </string-array>
+
+    <string-array name="pref_lyrics_type_values">
+        <item>0</item>
+        <item>1</item>
+    </string-array>
+
+    <array name="pref_lyrics_type_entries">
+        <item>@string/replace_cover</item>
+        <item>@string/over_cover</item>
+    </array>
 
     <string-array name="pref_tab_text_mode_values">
         <item>0</item>
@@ -40,48 +52,34 @@
         <item>@string/unlabeled</item>
     </array>
 
+    <array name="pref_appbar_mode_titles">
+        <item>@string/expanded</item>
+        <item>@string/compact</item>
+    </array>
+
+    <string-array name="pref_appbar_mode_values">
+        <item>0</item>
+        <item>1</item>
+    </string-array>
+
     <string-array name="pref_general_theme_list_titles">
         <item>@string/light_theme_name</item>
         <item>@string/dark_theme_name</item>
         <item>@string/follow_system</item>
     </string-array>
+
     <string-array name="pref_general_theme_list_values">
         <item>light</item>
         <item>dark</item>
         <item>auto</item>
     </string-array>
-    <string-array name="pref_grid_style_list_titles">
-        <item>@string/normal_style</item>
-        <item>@string/card_style</item>
-        <item>@string/card_color_style</item>
-        <item>@string/card_circular_style</item>
-        <item>@string/image</item>
-        <item>@string/image_gradient</item>
-    </string-array>
-
-    <string-array name="pref_grid_style_list_values">
-        <item>0</item>
-        <item>1</item>
-        <item>2</item>
-        <item>3</item>
-        <item>4</item>
-        <item>5</item>
-    </string-array>
-
-    <array name="pref_grid_style_layout">
-        <item>@layout/item_grid</item>
-        <item>@layout/item_card</item>
-        <item>@layout/item_card_color</item>
-        <item>@layout/item_grid_circle</item>
-        <item>@layout/image</item>
-        <item>@layout/item_image_gradient</item>
-    </array>
 
     <string-array name="pref_home_grid_style_list_titles">
         <item>@string/circular</item>
         <item>@string/card_color_style</item>
         <item>@string/card_style</item>
         <item>@string/tiny_card_style</item>
+        <item>@string/card_square</item>
     </string-array>
 
     <string-array name="pref_home_grid_style_list_values">
@@ -89,6 +87,7 @@
         <item>1</item>
         <item>2</item>
         <item>3</item>
+        <item>4</item>
     </string-array>
 
     <array name="pref_home_grid_style_layout">
@@ -96,15 +95,14 @@
         <item>@layout/item_artist_square</item>
         <item>@layout/item_album_card</item>
         <item>@layout/item_artist_card</item>
+        <item>@layout/item_image</item>
     </array>
-
 
     <array name="pref_auto_download_images_values">
         <item>always</item>
         <item>only_wifi</item>
         <item>never</item>
     </array>
-
 
     <string-array name="pref_playlists_last_added_interval_titles">
         <item>@string/today</item>
@@ -122,81 +120,24 @@
         <item>this_year</item>
     </string-array>
 
-    <string-array name="night">
-        <item>https://cdn.techjuice.pk/wp-content/uploads/2016/07/44.png</item>
-        <item>https://cdn.techjuice.pk/wp-content/uploads/2016/07/40.png</item>
-        <item>https://cdn.techjuice.pk/wp-content/uploads/2016/07/36.png</item>
-        <item>https://cdn.techjuice.pk/wp-content/uploads/2016/07/32.png</item>
-        <item>https://cdn.techjuice.pk/wp-content/uploads/2016/07/28.png</item>
-        <item>https://cdn.techjuice.pk/wp-content/uploads/2016/07/24.png</item>
-        <item>https://cdn.techjuice.pk/wp-content/uploads/2016/07/20.png</item>
-        <item>https://cdn.techjuice.pk/wp-content/uploads/2016/07/16.png</item>
-        <item>https://cdn.techjuice.pk/wp-content/uploads/2016/07/12.png</item>
-        <item>https://cdn.techjuice.pk/wp-content/uploads/2016/07/8.png</item>
-        <item>https://cdn.techjuice.pk/wp-content/uploads/2016/07/4.png</item>
-    </string-array>
-    <string-array name="evening">
-        <item>https://cdn.techjuice.pk/wp-content/uploads/2016/07/43.png</item>
-        <item>https://cdn.techjuice.pk/wp-content/uploads/2016/07/39.png</item>
-        <item>https://cdn.techjuice.pk/wp-content/uploads/2016/07/35.png</item>
-        <item>https://cdn.techjuice.pk/wp-content/uploads/2016/07/31.png</item>
-        <item>https://cdn.techjuice.pk/wp-content/uploads/2016/07/27.png</item>
-        <item>https://cdn.techjuice.pk/wp-content/uploads/2016/07/23.png</item>
-        <item>https://cdn.techjuice.pk/wp-content/uploads/2016/07/19.png</item>
-        <item>https://cdn.techjuice.pk/wp-content/uploads/2016/07/15.png</item>
-        <item>https://cdn.techjuice.pk/wp-content/uploads/2016/07/11.png</item>
-        <item>https://cdn.techjuice.pk/wp-content/uploads/2016/07/7.png</item>
-    </string-array>
-    <string-array name="after_noon">
-        <item>https://cdn.techjuice.pk/wp-content/uploads/2016/07/42.png</item>
-        <item>https://cdn.techjuice.pk/wp-content/uploads/2016/07/38.png</item>
-        <item>https://cdn.techjuice.pk/wp-content/uploads/2016/07/34.png</item>
-        <item>https://cdn.techjuice.pk/wp-content/uploads/2016/07/30.png</item>
-        <item>https://cdn.techjuice.pk/wp-content/uploads/2016/07/26.png</item>
-        <item>https://cdn.techjuice.pk/wp-content/uploads/2016/07/22.png</item>
-        <item>https://cdn.techjuice.pk/wp-content/uploads/2016/07/18.png</item>
-        <item>https://cdn.techjuice.pk/wp-content/uploads/2016/07/14.png</item>
-        <item>https://cdn.techjuice.pk/wp-content/uploads/2016/07/10.png</item>
-        <item>https://cdn.techjuice.pk/wp-content/uploads/2016/07/6.png</item>
-        <item>https://cdn.techjuice.pk/wp-content/uploads/2016/07/2.png</item>
-    </string-array>
-    <string-array name="morning">
-        <item>https://cdn.techjuice.pk/wp-content/uploads/2016/07/41.png</item>
-        <item>https://cdn.techjuice.pk/wp-content/uploads/2016/07/37.png</item>
-        <item>https://cdn.techjuice.pk/wp-content/uploads/2016/07/33.png</item>
-        <item>https://cdn.techjuice.pk/wp-content/uploads/2016/07/29.png</item>
-        <item>https://cdn.techjuice.pk/wp-content/uploads/2016/07/25.png</item>
-        <item>https://cdn.techjuice.pk/wp-content/uploads/2016/07/21.png</item>
-        <item>https://cdn.techjuice.pk/wp-content/uploads/2016/07/17.png</item>
-        <item>https://cdn.techjuice.pk/wp-content/uploads/2016/07/13.png</item>
-        <item>https://cdn.techjuice.pk/wp-content/uploads/2016/07/9.png</item>
-        <item>https://cdn.techjuice.pk/wp-content/uploads/2016/07/5.png</item>
-        <item>https://cdn.techjuice.pk/wp-content/uploads/2016/07/1.png</item>
-    </string-array>
 
-
-    <array name="pref_album_details_style_layout">
-        <item>@layout/activity_album</item>
-    </array>
     <string-array name="pref_language_names">
         <item>System default</item>
-        <item>Afrikaans</item>
         <item>Arabic</item>
         <item>Basque</item>
-        <item>Bengali</item>
-        <item>Catalan</item>
-        <item>China</item>
-        <item>Hong kong China</item>
-        <item>Taiwan</item>
+        <item>Burmese</item>
+        <item>Simplified Chinese</item>
+        <item>Traditional Chinese(Hong Kong)</item>
+        <item>Traditional Chinese(Taiwan)</item>
         <item>Croatian</item>
         <item>Czech</item>
         <item>Danish</item>
         <item>Dutch</item>
-        <item>Finnish</item>
+        <item>English</item>
+        <item>Filipino</item>
         <item>French</item>
         <item>German</item>
         <item>Greek</item>
-        <item>Hebrew</item>
         <item>Hindi</item>
         <item>Hungarian</item>
         <item>Indonesian</item>
@@ -204,33 +145,31 @@
         <item>Japanese</item>
         <item>Kannada</item>
         <item>Korean</item>
+        <item>Kurmanji Kurdish</item>
+        <item>Latvian</item>
         <item>Malayalam</item>
-        <item>Nepali</item>
-        <item>Norwegian</item>
-        <item>Oriya</item>
         <item>Persian</item>
         <item>Polish</item>
-        <item>Portuguese</item>
+        <item>Portuguese(Brazil)</item>
+        <item>Portuguese(Portugal)</item>
         <item>Romanian</item>
         <item>Russian</item>
         <item>Serbian</item>
-        <item>Slovak</item>
-        <item>Spain</item>
+        <item>Spanish</item>
+        <item>Spanish(Latin America)</item>
         <item>Swedish</item>
         <item>Tamil</item>
         <item>Telugu</item>
+        <item>Thai</item>
         <item>Turkish</item>
         <item>Ukrainian</item>
-        <item>Urdu</item>
         <item>Vietnamese</item>
     </string-array>
     <string-array name="pref_language_codes">
         <item>auto</item>
-        <item>af-ZA</item>
         <item>ar-SA</item>
         <item>eu-ES</item>
-        <item>bn-IN</item>
-        <item>ca-ES</item>
+        <item>my-MM</item>
         <item>zh-CN</item>
         <item>zh-HK</item>
         <item>zh-TW</item>
@@ -238,11 +177,11 @@
         <item>cs-cz</item>
         <item>da-DK</item>
         <item>nl-NL</item>
-        <item>fi-FI</item>
+        <item>en</item>
+        <item>fil-PH</item>
         <item>fr</item>
         <item>de</item>
         <item>el</item>
-        <item>iw</item>
         <item>hi</item>
         <item>hu</item>
         <item>in</item>
@@ -250,24 +189,28 @@
         <item>ja</item>
         <item>kn</item>
         <item>ko</item>
+        <item>kmr-TR</item>
+        <item>lv-LV</item>
         <item>ml</item>
-        <item>ne</item>
-        <item>no</item>
-        <item>or</item>
         <item>fa</item>
         <item>pl</item>
-        <item>pt</item>
+        <item>pt-BR</item>
+        <item>pt-PT</item>
         <item>ro</item>
         <item>ru</item>
         <item>sr</item>
-        <item>sk</item>
         <item>es</item>
-        <item>sw</item>
+        <item>es-419</item>
+        <item>sv</item>
         <item>ta</item>
         <item>te</item>
+        <item>th-TH</item>
         <item>tr</item>
         <item>uk</item>
-        <item>ur</item>
         <item>vi</item>
+    </string-array>
+    <string-array name="image_settings_options">
+        <item>@string/choose_image</item>
+        <item>@string/remove_image</item>
     </string-array>
 </resources>

@@ -1,34 +1,54 @@
+/*
+ * Copyright (c) 2020 Hemanth Savarla.
+ *
+ * Licensed under the GNU General Public License v3
+ *
+ * This is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU General Public License for more details.
+ *
+ */
 package code.name.monkey.retromusic.fragments.player.normal
 
 import android.animation.ArgbEvaluator
 import android.animation.ValueAnimator
+import android.content.SharedPreferences
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
-import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
 import androidx.appcompat.widget.Toolbar
-import code.name.monkey.appthemehelper.util.ATHUtil
+import androidx.core.view.isVisible
+import androidx.preference.PreferenceManager
 import code.name.monkey.appthemehelper.util.ToolbarContentTintHelper
 import code.name.monkey.retromusic.R
+import code.name.monkey.retromusic.SNOWFALL
+import code.name.monkey.retromusic.databinding.FragmentPlayerBinding
+import code.name.monkey.retromusic.extensions.*
 import code.name.monkey.retromusic.fragments.base.AbsPlayerFragment
 import code.name.monkey.retromusic.fragments.player.PlayerAlbumCoverFragment
 import code.name.monkey.retromusic.helper.MusicPlayerRemote
 import code.name.monkey.retromusic.model.Song
 import code.name.monkey.retromusic.util.PreferenceUtil
 import code.name.monkey.retromusic.util.ViewUtil
+import code.name.monkey.retromusic.util.color.MediaNotificationProcessor
 import code.name.monkey.retromusic.views.DrawableGradient
-import kotlinx.android.synthetic.main.fragment_player.*
 
-
-class PlayerFragment : AbsPlayerFragment() {
+class PlayerFragment : AbsPlayerFragment(R.layout.fragment_player),
+    SharedPreferences.OnSharedPreferenceChangeListener {
 
     private var lastColor: Int = 0
     override val paletteColor: Int
         get() = lastColor
 
-    private lateinit var playbackControlsFragment: PlayerPlaybackControlsFragment
+    private lateinit var controlsFragment: PlayerPlaybackControlsFragment
     private var valueAnimator: ValueAnimator? = null
+
+    private var _binding: FragmentPlayerBinding? = null
+    private val binding get() = _binding!!
 
 
     private fun colorize(i: Int) {
@@ -38,7 +58,7 @@ class PlayerFragment : AbsPlayerFragment() {
 
         valueAnimator = ValueAnimator.ofObject(
             ArgbEvaluator(),
-            ATHUtil.resolveColor(requireContext(), R.attr.colorSurface),
+            surfaceColor(),
             i
         )
         valueAnimator?.addUpdateListener { animation ->
@@ -47,45 +67,38 @@ class PlayerFragment : AbsPlayerFragment() {
                     GradientDrawable.Orientation.TOP_BOTTOM,
                     intArrayOf(
                         animation.animatedValue as Int,
-                        ATHUtil.resolveColor(requireContext(), R.attr.colorSurface)
+                        surfaceColor()
                     ), 0
                 )
-                colorGradientBackground?.background = drawable
+                binding.colorGradientBackground.background = drawable
             }
         }
         valueAnimator?.setDuration(ViewUtil.RETRO_MUSIC_ANIM_TIME.toLong())?.start()
     }
 
     override fun onShow() {
-        playbackControlsFragment.show()
+        controlsFragment.show()
     }
 
     override fun onHide() {
-        playbackControlsFragment.hide()
-        onBackPressed()
+        controlsFragment.hide()
     }
 
-    override fun onBackPressed(): Boolean {
-        return false
-    }
+    override fun toolbarIconColor() = colorControlNormal()
 
-    override fun toolbarIconColor(): Int {
-        return ATHUtil.resolveColor(requireContext(), R.attr.colorControlNormal)
-    }
-
-    override fun onColorChanged(color: Int) {
-        playbackControlsFragment.setDark(color)
-        lastColor = color
-        callbacks?.onPaletteColorChanged()
+    override fun onColorChanged(color: MediaNotificationProcessor) {
+        controlsFragment.setColor(color)
+        lastColor = color.backgroundColor
+        libraryViewModel.updateColor(color.backgroundColor)
 
         ToolbarContentTintHelper.colorizeToolbar(
-            playerToolbar,
-            ATHUtil.resolveColor(requireContext(), R.attr.colorControlNormal),
+            binding.playerToolbar,
+            colorControlNormal(),
             requireActivity()
         )
 
-        if (PreferenceUtil.getInstance(requireContext()).adaptiveColor) {
-            colorize(color)
+        if (PreferenceUtil.isAdaptiveColor) {
+            colorize(color.backgroundColor)
         }
     }
 
@@ -100,40 +113,60 @@ class PlayerFragment : AbsPlayerFragment() {
         toggleFavorite(MusicPlayerRemote.currentSong)
     }
 
-
-    override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View? {
-
-        return inflater.inflate(R.layout.fragment_player, container, false)
-    }
-
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        _binding = FragmentPlayerBinding.bind(view)
         setUpSubFragments()
         setUpPlayerToolbar()
+        startOrStopSnow(PreferenceUtil.isSnowFalling)
+
+        PreferenceManager.getDefaultSharedPreferences(requireContext())
+            .registerOnSharedPreferenceChangeListener(this)
+        playerToolbar().drawAboveSystemBars()
     }
 
+    override fun onDestroyView() {
+        super.onDestroyView()
+        PreferenceManager.getDefaultSharedPreferences(requireContext())
+            .unregisterOnSharedPreferenceChangeListener(this)
+        _binding = null
+    }
 
     private fun setUpSubFragments() {
-        playbackControlsFragment =
-            childFragmentManager.findFragmentById(R.id.playbackControlsFragment) as PlayerPlaybackControlsFragment
-        val playerAlbumCoverFragment =
-            childFragmentManager.findFragmentById(R.id.playerAlbumCoverFragment) as PlayerAlbumCoverFragment
+        controlsFragment = whichFragment(R.id.playbackControlsFragment)
+        val playerAlbumCoverFragment: PlayerAlbumCoverFragment =
+            whichFragment(R.id.playerAlbumCoverFragment)
         playerAlbumCoverFragment.setCallbacks(this)
     }
 
     private fun setUpPlayerToolbar() {
-        playerToolbar.inflateMenu(R.menu.menu_player)
-        playerToolbar.setNavigationOnClickListener { requireActivity().onBackPressed() }
-        playerToolbar.setOnMenuItemClickListener(this)
+        binding.playerToolbar.inflateMenu(R.menu.menu_player)
+        //binding.playerToolbar.menu.setUpWithIcons()
+        binding.playerToolbar.setNavigationOnClickListener { requireActivity().onBackPressedDispatcher.onBackPressed() }
+        binding.playerToolbar.setOnMenuItemClickListener(this)
 
         ToolbarContentTintHelper.colorizeToolbar(
-            playerToolbar,
-            ATHUtil.resolveColor(requireContext(), R.attr.colorControlNormal),
+            binding.playerToolbar,
+            colorControlNormal(),
             requireActivity()
         )
+    }
+
+    override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences, key: String?) {
+        if (key == SNOWFALL) {
+            startOrStopSnow(PreferenceUtil.isSnowFalling)
+        }
+    }
+
+    private fun startOrStopSnow(isSnowFalling: Boolean) {
+        if (_binding == null) return
+        if (isSnowFalling && !surfaceColor().isColorLight) {
+            binding.snowfallView.isVisible = true
+            binding.snowfallView.restartFalling()
+        } else {
+            binding.snowfallView.isVisible = false
+            binding.snowfallView.stopFalling()
+        }
     }
 
     override fun onServiceConnected() {
@@ -145,7 +178,7 @@ class PlayerFragment : AbsPlayerFragment() {
     }
 
     override fun playerToolbar(): Toolbar {
-        return playerToolbar
+        return binding.playerToolbar
     }
 
     companion object {
@@ -155,4 +188,3 @@ class PlayerFragment : AbsPlayerFragment() {
         }
     }
 }
-

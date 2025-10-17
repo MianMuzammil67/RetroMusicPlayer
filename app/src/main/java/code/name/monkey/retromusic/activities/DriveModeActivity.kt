@@ -1,45 +1,49 @@
 /*
- * Copyright (c) 2020 Hemanth Savarala.
+ * Copyright (c) 2020 Hemanth Savarla.
  *
  * Licensed under the GNU General Public License v3
  *
- * This is free software: you can redistribute it and/or modify it under
- * the terms of the GNU General Public License as published by
- *  the Free Software Foundation either version 3 of the License, or (at your option) any later version.
+ * This is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
  *
  * This software is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
+ *
  */
-
 package code.name.monkey.retromusic.activities
 
-import android.animation.ObjectAnimator
+import android.content.Intent
 import android.graphics.Color
 import android.graphics.PorterDuff
 import android.os.Bundle
-import android.view.animation.LinearInterpolator
-import android.widget.SeekBar
-import code.name.monkey.appthemehelper.ThemeStore
+import androidx.lifecycle.lifecycleScope
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import code.name.monkey.retromusic.R
 import code.name.monkey.retromusic.activities.base.AbsMusicServiceActivity
-import code.name.monkey.retromusic.fragments.base.AbsPlayerControlsFragment
+import code.name.monkey.retromusic.databinding.ActivityDriveModeBinding
+import code.name.monkey.retromusic.db.toSongEntity
+import code.name.monkey.retromusic.extensions.accentColor
+import code.name.monkey.retromusic.extensions.drawAboveSystemBars
 import code.name.monkey.retromusic.glide.BlurTransformation
-import code.name.monkey.retromusic.glide.RetroMusicColoredTarget
-import code.name.monkey.retromusic.glide.SongGlideRequest
+import code.name.monkey.retromusic.glide.RetroGlideExtension
+import code.name.monkey.retromusic.glide.RetroGlideExtension.songCoverOptions
 import code.name.monkey.retromusic.helper.MusicPlayerRemote
 import code.name.monkey.retromusic.helper.MusicProgressViewUpdateHelper
 import code.name.monkey.retromusic.helper.MusicProgressViewUpdateHelper.Callback
 import code.name.monkey.retromusic.helper.PlayPauseButtonOnClickHandler
-import code.name.monkey.retromusic.misc.SimpleOnSeekbarChangeListener
+import code.name.monkey.retromusic.model.Song
+import code.name.monkey.retromusic.repository.RealRepository
 import code.name.monkey.retromusic.service.MusicService
 import code.name.monkey.retromusic.util.MusicUtil
 import com.bumptech.glide.Glide
-import kotlinx.android.synthetic.main.activity_drive_mode.*
-import kotlinx.coroutines.CoroutineScope
+import com.google.android.material.slider.Slider
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.koin.android.ext.android.inject
+
 
 /**
  * Created by hemanths on 2020-02-02.
@@ -47,21 +51,24 @@ import kotlinx.coroutines.withContext
 
 class DriveModeActivity : AbsMusicServiceActivity(), Callback {
 
+    private lateinit var binding: ActivityDriveModeBinding
     private var lastPlaybackControlsColor: Int = Color.GRAY
     private var lastDisabledPlaybackControlsColor: Int = Color.GRAY
     private lateinit var progressViewUpdateHelper: MusicProgressViewUpdateHelper
+    private val repository: RealRepository by inject()
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        setDrawUnderStatusBar()
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_drive_mode)
+        binding = ActivityDriveModeBinding.inflate(layoutInflater)
+        setContentView(binding.root)
         setUpMusicControllers()
 
         progressViewUpdateHelper = MusicProgressViewUpdateHelper(this)
-        lastPlaybackControlsColor = ThemeStore.accentColor(this)
-        close.setOnClickListener {
-            onBackPressed()
+        lastPlaybackControlsColor = accentColor()
+        binding.close.setOnClickListener {
+            onBackPressedDispatcher.onBackPressed()
         }
+        binding.repeatButton.drawAboveSystemBars()
     }
 
     private fun setUpMusicControllers() {
@@ -74,36 +81,46 @@ class DriveModeActivity : AbsMusicServiceActivity(), Callback {
     }
 
     private fun setupFavouriteToggle() {
-        songFavourite.setOnClickListener {
-            MusicUtil.toggleFavorite(
-                this@DriveModeActivity,
-                MusicPlayerRemote.currentSong
-            )
+        binding.songFavourite.setOnClickListener {
+            toggleFavorite(MusicPlayerRemote.currentSong)
         }
     }
 
-    private fun toggleFavourite() {
-        CoroutineScope(Dispatchers.IO).launch {
-            val isFavourite =
-                MusicUtil.isFavorite(this@DriveModeActivity, MusicPlayerRemote.currentSong)
+    private fun toggleFavorite(song: Song) {
+        lifecycleScope.launch(Dispatchers.IO) {
+            val playlist = repository.favoritePlaylist()
+            val songEntity = song.toSongEntity(playlist.playListId)
+            val isFavorite = repository.isSongFavorite(song.id)
+            if (isFavorite) {
+                repository.removeSongFromPlaylist(songEntity)
+            } else {
+                repository.insertSongs(listOf(song.toSongEntity(playlist.playListId)))
+            }
+            LocalBroadcastManager.getInstance(this@DriveModeActivity)
+                .sendBroadcast(Intent(MusicService.FAVORITE_STATE_CHANGED))
+        }
+    }
+
+    private fun updateFavorite() {
+        lifecycleScope.launch(Dispatchers.IO) {
+            val isFavorite: Boolean =
+                repository.isSongFavorite(MusicPlayerRemote.currentSong.id)
             withContext(Dispatchers.Main) {
-                songFavourite.setImageResource(if (isFavourite) R.drawable.ic_favorite_white_24dp else R.drawable.ic_favorite_border_white_24dp)
+                binding.songFavourite.setImageResource(if (isFavorite) R.drawable.ic_favorite else R.drawable.ic_favorite_border)
             }
         }
     }
 
     private fun setUpProgressSlider() {
-        progressSlider.setOnSeekBarChangeListener(object : SimpleOnSeekbarChangeListener() {
-            override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {
-                if (fromUser) {
-                    MusicPlayerRemote.seekTo(progress)
-                    onUpdateProgressViews(
-                        MusicPlayerRemote.songProgressMillis,
-                        MusicPlayerRemote.songDurationMillis
-                    )
-                }
+        binding.progressSlider.addOnChangeListener { _: Slider, progress: Float, fromUser: Boolean ->
+            if (fromUser) {
+                MusicPlayerRemote.seekTo(progress.toInt())
+                onUpdateProgressViews(
+                    MusicPlayerRemote.songProgressMillis,
+                    MusicPlayerRemote.songDurationMillis
+                )
             }
-        })
+        }
     }
 
     override fun onPause() {
@@ -117,21 +134,20 @@ class DriveModeActivity : AbsMusicServiceActivity(), Callback {
     }
 
     private fun setUpPrevNext() {
-
-        nextButton.setOnClickListener { MusicPlayerRemote.playNextSong() }
-        previousButton.setOnClickListener { MusicPlayerRemote.back() }
+        binding.nextButton.setOnClickListener { MusicPlayerRemote.playNextSong() }
+        binding.previousButton.setOnClickListener { MusicPlayerRemote.back() }
     }
 
     private fun setUpShuffleButton() {
-        shuffleButton.setOnClickListener { MusicPlayerRemote.toggleShuffleMode() }
+        binding.shuffleButton.setOnClickListener { MusicPlayerRemote.toggleShuffleMode() }
     }
 
     private fun setUpRepeatButton() {
-        repeatButton.setOnClickListener { MusicPlayerRemote.cycleRepeatMode() }
+        binding.repeatButton.setOnClickListener { MusicPlayerRemote.cycleRepeatMode() }
     }
 
     private fun setUpPlayPauseFab() {
-        playPauseButton.setOnClickListener(PlayPauseButtonOnClickHandler())
+        binding.playPauseButton.setOnClickListener(PlayPauseButtonOnClickHandler())
     }
 
     override fun onRepeatModeChanged() {
@@ -155,24 +171,25 @@ class DriveModeActivity : AbsMusicServiceActivity(), Callback {
         updateSong()
         updateRepeatState()
         updateShuffleState()
-        toggleFavourite()
+        updateFavorite()
     }
 
     private fun updatePlayPauseDrawableState() {
         if (MusicPlayerRemote.isPlaying) {
-            playPauseButton.setImageResource(R.drawable.ic_pause_white_24dp)
+            binding.playPauseButton.setImageResource(R.drawable.ic_pause)
         } else {
-            playPauseButton.setImageResource(R.drawable.ic_play_arrow_white_24dp)
+            binding.playPauseButton.setImageResource(R.drawable.ic_play_arrow)
         }
     }
 
     fun updateShuffleState() {
         when (MusicPlayerRemote.shuffleMode) {
-            MusicService.SHUFFLE_MODE_SHUFFLE -> shuffleButton.setColorFilter(
+            MusicService.SHUFFLE_MODE_SHUFFLE -> binding.shuffleButton.setColorFilter(
                 lastPlaybackControlsColor,
                 PorterDuff.Mode.SRC_IN
             )
-            else -> shuffleButton.setColorFilter(
+
+            else -> binding.shuffleButton.setColorFilter(
                 lastDisabledPlaybackControlsColor,
                 PorterDuff.Mode.SRC_IN
             )
@@ -182,19 +199,27 @@ class DriveModeActivity : AbsMusicServiceActivity(), Callback {
     private fun updateRepeatState() {
         when (MusicPlayerRemote.repeatMode) {
             MusicService.REPEAT_MODE_NONE -> {
-                repeatButton.setImageResource(R.drawable.ic_repeat_white_24dp)
-                repeatButton.setColorFilter(
+                binding.repeatButton.setImageResource(R.drawable.ic_repeat)
+                binding.repeatButton.setColorFilter(
                     lastDisabledPlaybackControlsColor,
                     PorterDuff.Mode.SRC_IN
                 )
             }
+
             MusicService.REPEAT_MODE_ALL -> {
-                repeatButton.setImageResource(R.drawable.ic_repeat_white_24dp)
-                repeatButton.setColorFilter(lastPlaybackControlsColor, PorterDuff.Mode.SRC_IN)
+                binding.repeatButton.setImageResource(R.drawable.ic_repeat)
+                binding.repeatButton.setColorFilter(
+                    lastPlaybackControlsColor,
+                    PorterDuff.Mode.SRC_IN
+                )
             }
+
             MusicService.REPEAT_MODE_THIS -> {
-                repeatButton.setImageResource(R.drawable.ic_repeat_one_white_24dp)
-                repeatButton.setColorFilter(lastPlaybackControlsColor, PorterDuff.Mode.SRC_IN)
+                binding.repeatButton.setImageResource(R.drawable.ic_repeat_one)
+                binding.repeatButton.setColorFilter(
+                    lastPlaybackControlsColor,
+                    PorterDuff.Mode.SRC_IN
+                )
             }
         }
     }
@@ -202,35 +227,34 @@ class DriveModeActivity : AbsMusicServiceActivity(), Callback {
     override fun onPlayingMetaChanged() {
         super.onPlayingMetaChanged()
         updateSong()
-        toggleFavourite()
+        updateFavorite()
+    }
+
+    override fun onFavoriteStateChanged() {
+        super.onFavoriteStateChanged()
+        updateFavorite()
     }
 
     private fun updateSong() {
         val song = MusicPlayerRemote.currentSong
 
-        songTitle.text = song.title
-        songText.text = song.artistName
+        binding.songTitle.text = song.title
+        binding.songText.text = song.artistName
 
-        SongGlideRequest.Builder.from(Glide.with(this), song)
-            .checkIgnoreMediaStore(this)
-            .generatePalette(this)
-            .build()
+        Glide.with(this)
+            .load(RetroGlideExtension.getSongModel(song))
+            .songCoverOptions(song)
             .transform(BlurTransformation.Builder(this).build())
-            .into(object : RetroMusicColoredTarget(image) {
-                override fun onColorReady(color: Int) {
-                }
-            })
+            .into(binding.image)
     }
 
     override fun onUpdateProgressViews(progress: Int, total: Int) {
-        progressSlider.max = total
+        binding.progressSlider.run {
+            valueTo = total.toFloat()
+            value = progress.toFloat().coerceIn(valueFrom, valueTo)
+        }
 
-        val animator = ObjectAnimator.ofInt(progressSlider, "progress", progress)
-        animator.duration = AbsPlayerControlsFragment.SLIDER_ANIMATION_TIME
-        animator.interpolator = LinearInterpolator()
-        animator.start()
-
-        songTotalTime.text = MusicUtil.getReadableDurationString(total.toLong())
-        songCurrentProgress.text = MusicUtil.getReadableDurationString(progress.toLong())
+        binding.songTotalTime.text = MusicUtil.getReadableDurationString(total.toLong())
+        binding.songCurrentProgress.text = MusicUtil.getReadableDurationString(progress.toLong())
     }
 }

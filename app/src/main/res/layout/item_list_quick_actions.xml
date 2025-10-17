@@ -17,28 +17,33 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:gravity="center_vertical"
-    android:orientation="horizontal">
+    android:orientation="horizontal"
+    android:paddingHorizontal="16dp">
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/playAction"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="4dp"
+        style="@style/Widget.Material3.Button.OutlinedButton"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
         android:layout_marginEnd="4dp"
         android:layout_weight="1"
+        android:paddingVertical="10dp"
         android:text="@string/action_play_all"
+        android:textAppearance="@style/TextViewButton"
+        android:textColor="?android:attr/textColorPrimary"
         app:backgroundTint="?attr/colorSurface"
-        app:icon="@drawable/ic_play_arrow_white_24dp" />
+        app:icon="@drawable/ic_play_arrow" />
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/shuffleAction"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        style="@style/Widget.Material3.Button.Icon"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
         android:layout_marginStart="4dp"
-        android:layout_marginEnd="4dp"
         android:layout_weight="1"
+        android:paddingVertical="10dp"
         android:text="@string/shuffle"
-        app:backgroundTint="?attr/colorSurface"
-        app:icon="@drawable/ic_shuffle_white_24dp" />
+        android:textAppearance="@style/TextViewButton"
+        app:icon="@drawable/ic_shuffle" />
 
 </LinearLayout>

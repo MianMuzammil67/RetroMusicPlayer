@@ -31,6 +31,8 @@
         android:id="@android:id/icon"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:paddingStart="0dp"
+        android:paddingEnd="16dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:tint="?attr/colorControlNormal"
@@ -42,7 +44,7 @@
         android:layout_height="wrap_content"
         android:textAppearance="@style/TextViewSubtitle1"
         app:layout_constrainedWidth="true"
-        app:layout_constraintEnd_toStartOf="@android:id/widget_frame"
+        app:layout_constraintEnd_toStartOf="@id/circle"
         app:layout_constraintStart_toStartOf="@+id/guideline_front_margin"
         app:layout_constraintTop_toTopOf="parent"
         tools:maxLines="@string/grid_size_1"
@@ -53,12 +55,14 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="2dp"
+        android:paddingStart="0dp"
+        android:paddingEnd="16dp"
+        android:textAppearance="@style/TextViewNormal"
         android:textColor="?android:attr/textColorSecondary"
         app:layout_constrainedWidth="true"
-        app:layout_constraintEnd_toStartOf="@android:id/widget_frame"
+        app:layout_constraintEnd_toStartOf="@id/circle"
         app:layout_constraintStart_toStartOf="@+id/guideline_front_margin"
         app:layout_constraintTop_toBottomOf="@android:id/title"
-        app:lineHeightHint="20sp"
         tools:maxLines="2"
         tools:text="@tools:sample/lorem/random" />
 
@@ -69,13 +73,11 @@
         android:orientation="vertical"
         app:layout_constraintGuide_begin="@dimen/list_pref_guideline_begin" />
 
-    <LinearLayout
-        android:id="@android:id/widget_frame"
-        android:layout_width="wrap_content"
-        android:layout_height="match_parent"
-        android:layout_gravity="end|center_vertical"
-        android:gravity="center_vertical"
-        android:orientation="vertical"
+    <code.name.monkey.appthemehelper.common.prefs.BorderCircleView
+        android:id="@+id/circle"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_marginStart="8dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent" />

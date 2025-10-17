@@ -16,17 +16,13 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     tools:context=".DrawerActivity">
-
-
     <item
         android:id="@+id/action_grid_size"
-        android:icon="@drawable/ic_grid_size_white_24dp"
+        android:icon="@drawable/ic_grid_size"
         android:title="@string/action_grid_size"
-        app:showAsAction="ifRoom">
+        app:showAsAction="never">
         <menu>
-            <group
-                android:id="@+id/group_grid_size"
-                android:checkableBehavior="single">
+            <group android:checkableBehavior="single">
                 <item
                     android:id="@+id/action_grid_size_1"
                     android:title="@string/grid_size_1" />
@@ -56,13 +52,11 @@
     </item>
     <item
         android:id="@+id/action_layout_type"
-        android:icon="@drawable/ic_dashboard_white_24dp"
+        android:icon="@drawable/ic_dashboard"
         android:title="@string/grid_style_label"
-        app:showAsAction="ifRoom">
+        app:showAsAction="never">
         <menu>
-            <group
-                android:id="@+id/group_layout_type"
-                android:checkableBehavior="single">
+            <group android:checkableBehavior="single">
                 <item
                     android:id="@+id/action_layout_normal"
                     android:title="@string/normal" />
@@ -86,10 +80,20 @@
     </item>
     <item
         android:id="@+id/action_sort_order"
-        android:icon="@drawable/ic_sort_white_24dp"
+        android:icon="@drawable/ic_sort"
         android:title="@string/action_sort_order"
-        app:showAsAction="ifRoom">
+        app:showAsAction="never">
         <menu></menu>
     </item>
-
+    <item
+        android:orderInCategory="10"
+        android:id="@+id/action_settings"
+        android:icon="@drawable/ic_settings"
+        android:title="@string/action_settings"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_cast"
+        android:title="@string/action_cast"
+        app:actionProviderClass="androidx.mediarouter.app.MediaRouteActionProvider"
+        app:showAsAction="always" />
 </menu>

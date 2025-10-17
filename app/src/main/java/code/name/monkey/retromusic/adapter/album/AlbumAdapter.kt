@@ -1,40 +1,51 @@
+/*
+ * Copyright (c) 2020 Hemanth Savarla.
+ *
+ * Licensed under the GNU General Public License v3
+ *
+ * This is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU General Public License for more details.
+ *
+ */
 package code.name.monkey.retromusic.adapter.album
 
-import android.app.ActivityOptions
 import android.content.res.ColorStateList
-import android.graphics.drawable.Drawable
 import android.view.LayoutInflater
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
-import androidx.appcompat.app.AppCompatActivity
-import code.name.monkey.appthemehelper.util.ColorUtil
-import code.name.monkey.appthemehelper.util.MaterialValueHelper
+import androidx.core.view.isVisible
+import androidx.fragment.app.FragmentActivity
 import code.name.monkey.retromusic.R
 import code.name.monkey.retromusic.adapter.base.AbsMultiSelectAdapter
 import code.name.monkey.retromusic.adapter.base.MediaEntryViewHolder
-import code.name.monkey.retromusic.glide.AlbumGlideRequest
+import code.name.monkey.retromusic.glide.RetroGlideExtension
+import code.name.monkey.retromusic.glide.RetroGlideExtension.albumCoverOptions
+import code.name.monkey.retromusic.glide.RetroGlideExtension.asBitmapPalette
 import code.name.monkey.retromusic.glide.RetroMusicColoredTarget
-import code.name.monkey.retromusic.helper.MusicPlayerRemote
 import code.name.monkey.retromusic.helper.SortOrder
 import code.name.monkey.retromusic.helper.menu.SongsMenuHelper
-import code.name.monkey.retromusic.interfaces.CabHolder
+import code.name.monkey.retromusic.interfaces.IAlbumClickListener
 import code.name.monkey.retromusic.model.Album
 import code.name.monkey.retromusic.model.Song
 import code.name.monkey.retromusic.util.MusicUtil
-import code.name.monkey.retromusic.util.NavigationUtil
 import code.name.monkey.retromusic.util.PreferenceUtil
+import code.name.monkey.retromusic.util.color.MediaNotificationProcessor
 import com.bumptech.glide.Glide
 import me.zhanghai.android.fastscroll.PopupTextProvider
 
 open class AlbumAdapter(
-    protected val activity: AppCompatActivity,
+    override val activity: FragmentActivity,
     var dataSet: List<Album>,
-    protected var itemLayoutRes: Int,
-    cabHolder: CabHolder?
+    var itemLayoutRes: Int,
+    val listener: IAlbumClickListener?
 ) : AbsMultiSelectAdapter<AlbumAdapter.ViewHolder, Album>(
     activity,
-    cabHolder,
     R.menu.menu_media_selection
 ), PopupTextProvider {
 
@@ -56,12 +67,18 @@ open class AlbumAdapter(
         return ViewHolder(view)
     }
 
-    private fun getAlbumTitle(album: Album): String? {
+    private fun getAlbumTitle(album: Album): String {
         return album.title
     }
 
     protected open fun getAlbumText(album: Album): String? {
-        return album.artistName
+        return album.albumArtist.let {
+            if (it.isNullOrEmpty()) {
+                album.artistName
+            } else {
+                it
+            }
+        }
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
@@ -70,54 +87,39 @@ open class AlbumAdapter(
         holder.itemView.isActivated = isChecked
         holder.title?.text = getAlbumTitle(album)
         holder.text?.text = getAlbumText(album)
-        holder.playSongs?.setOnClickListener {
-            album.songs?.let { songs ->
-                MusicPlayerRemote.openQueue(
-                    songs,
-                    0,
-                    true
-                )
-            }
+        // Check if imageContainer exists so we can have a smooth transition without
+        // CardView clipping, if it doesn't exist in current layout set transition name to image instead.
+        if (holder.imageContainer != null) {
+            holder.imageContainer?.transitionName = album.id.toString()
+        } else {
+            holder.image?.transitionName = album.id.toString()
         }
         loadAlbumCover(album, holder)
     }
 
-    protected open fun setColors(color: Int, holder: ViewHolder) {
+    protected open fun setColors(color: MediaNotificationProcessor, holder: ViewHolder) {
         if (holder.paletteColorContainer != null) {
-            holder.title?.setTextColor(
-                MaterialValueHelper.getPrimaryTextColor(
-                    activity,
-                    ColorUtil.isColorLight(color)
-                )
-            )
-            holder.text?.setTextColor(
-                MaterialValueHelper.getSecondaryTextColor(
-                    activity,
-                    ColorUtil.isColorLight(color)
-                )
-            )
-            holder.paletteColorContainer?.setBackgroundColor(color)
+            holder.title?.setTextColor(color.primaryTextColor)
+            holder.text?.setTextColor(color.secondaryTextColor)
+            holder.paletteColorContainer?.setBackgroundColor(color.backgroundColor)
         }
-        holder.mask?.backgroundTintList = ColorStateList.valueOf(color)
+        holder.mask?.backgroundTintList = ColorStateList.valueOf(color.primaryTextColor)
+        holder.imageContainerCard?.setCardBackgroundColor(color.backgroundColor)
     }
 
     protected open fun loadAlbumCover(album: Album, holder: ViewHolder) {
         if (holder.image == null) {
             return
         }
-
-        AlbumGlideRequest.Builder.from(Glide.with(activity), album.safeGetFirstSong())
-            .checkIgnoreMediaStore(activity)
-            .generatePalette(activity)
-            .build()
+        val song = album.safeGetFirstSong()
+        Glide.with(activity)
+            .asBitmapPalette()
+            .albumCoverOptions(song)
+            //.checkIgnoreMediaStore()
+            .load(RetroGlideExtension.getSongModel(song))
             .into(object : RetroMusicColoredTarget(holder.image!!) {
-                override fun onLoadCleared(placeholder: Drawable?) {
-                    super.onLoadCleared(placeholder)
-                    //setColors(defaultFooterColor, holder)
-                }
-
-                override fun onColorReady(color: Int) {
-                    setColors(color, holder)
+                override fun onColorReady(colors: MediaNotificationProcessor) {
+                    setColors(colors, holder)
                 }
             })
     }
@@ -127,27 +129,28 @@ open class AlbumAdapter(
     }
 
     override fun getItemId(position: Int): Long {
-        return dataSet[position].id.toLong()
+        return dataSet[position].id
     }
 
     override fun getIdentifier(position: Int): Album? {
         return dataSet[position]
     }
 
-    override fun getName(album: Album): String {
-        return album.title!!
+    override fun getName(model: Album): String {
+        return model.title
     }
 
     override fun onMultipleItemAction(
-        menuItem: MenuItem, selection: ArrayList<Album>
+        menuItem: MenuItem,
+        selection: List<Album>
     ) {
         SongsMenuHelper.handleMenuClick(activity, getSongList(selection), menuItem.itemId)
     }
 
-    private fun getSongList(albums: List<Album>): ArrayList<Song> {
+    private fun getSongList(albums: List<Album>): List<Song> {
         val songs = ArrayList<Song>()
         for (album in albums) {
-            songs.addAll(album.songs!!)
+            songs.addAll(album.songs)
         }
         return songs
     }
@@ -158,23 +161,22 @@ open class AlbumAdapter(
 
     private fun getSectionName(position: Int): String {
         var sectionName: String? = null
-        when (PreferenceUtil.getInstance(activity).albumSortOrder) {
+        when (PreferenceUtil.albumSortOrder) {
             SortOrder.AlbumSortOrder.ALBUM_A_Z, SortOrder.AlbumSortOrder.ALBUM_Z_A -> sectionName =
                 dataSet[position].title
-            SortOrder.AlbumSortOrder.ALBUM_ARTIST -> sectionName = dataSet[position].artistName
+
+            SortOrder.AlbumSortOrder.ALBUM_ARTIST -> sectionName = dataSet[position].albumArtist
             SortOrder.AlbumSortOrder.ALBUM_YEAR -> return MusicUtil.getYearString(
                 dataSet[position].year
             )
         }
-
         return MusicUtil.getSectionName(sectionName)
     }
 
     inner class ViewHolder(itemView: View) : MediaEntryViewHolder(itemView) {
 
         init {
-            setImageTransitionName(activity.getString(R.string.transition_album_art))
-            menu?.visibility = View.GONE
+            menu?.isVisible = false
         }
 
         override fun onClick(v: View?) {
@@ -182,22 +184,14 @@ open class AlbumAdapter(
             if (isInQuickSelectMode) {
                 toggleChecked(layoutPosition)
             } else {
-                val activityOptions = ActivityOptions.makeSceneTransitionAnimation(
-                    activity,
-                    imageContainerCard ?: image,
-                    "${activity.getString(R.string.transition_album_art)}_${dataSet[layoutPosition].id}"
-                )
-                NavigationUtil.goToAlbumOptions(
-                    activity,
-                    dataSet[layoutPosition].id,
-                    activityOptions
-                )
+                image?.let {
+                    listener?.onAlbumClick(dataSet[layoutPosition].id, imageContainer ?: it)
+                }
             }
         }
 
         override fun onLongClick(v: View?): Boolean {
-            toggleChecked(layoutPosition)
-            return super.onLongClick(v)
+            return toggleChecked(layoutPosition)
         }
     }
 

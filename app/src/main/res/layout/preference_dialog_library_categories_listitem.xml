@@ -20,6 +20,7 @@
     android:background="?attr/rectSelector"
     android:descendantFocusability="blocksDescendants"
     android:focusable="true"
+    android:minHeight="@dimen/md_listitem_height"
     android:orientation="horizontal"
     android:paddingStart="16dp"
     android:paddingEnd="0dp"
@@ -27,8 +28,9 @@
 
     <com.google.android.material.checkbox.MaterialCheckBox
         android:id="@+id/checkbox"
+        style="@style/Widget.Material3.CompoundButton.CheckBox"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:background="@null"
         android:clickable="false"
         android:focusable="false"
@@ -41,11 +43,7 @@
         android:layout_weight="1"
         android:ellipsize="end"
         android:gravity="center_vertical"
-        android:minHeight="@dimen/md_listitem_height"
-        android:paddingStart="@dimen/md_listitem_control_margin"
-        android:paddingLeft="@dimen/md_listitem_control_margin"
-        android:paddingTop="@dimen/md_listitem_vertical_margin_choice"
-        android:paddingBottom="@dimen/md_listitem_vertical_margin_choice"
+        android:paddingHorizontal="16dp"
         android:singleLine="true"
         android:textAppearance="@style/TextViewNormal"
         android:textColor="?android:attr/textColorPrimary"
@@ -61,7 +59,7 @@
         android:focusable="false"
         android:padding="16dp"
         android:tintMode="src_in"
-        app:srcCompat="@drawable/ic_drag_vertical_white_24dp"
+        app:srcCompat="@drawable/ic_drag_vertical"
         app:tint="?attr/colorControlNormal"
         tools:ignore="ContentDescription" />
 

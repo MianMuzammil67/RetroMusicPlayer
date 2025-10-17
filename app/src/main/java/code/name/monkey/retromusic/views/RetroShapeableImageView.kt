@@ -15,6 +15,7 @@ package code.name.monkey.retromusic.views
 
 import android.content.Context
 import android.util.AttributeSet
+import androidx.core.content.withStyledAttributes
 import code.name.monkey.retromusic.R
 import com.google.android.material.imageview.ShapeableImageView
 import com.google.android.material.shape.CornerFamily
@@ -29,15 +30,15 @@ class RetroShapeableImageView @JvmOverloads constructor(
 
 
     init {
-        val typedArray =
-            context.obtainStyledAttributes(attrs, R.styleable.RetroShapeableImageView, defStyle, -1)
-        val cornerSize =
-            typedArray.getDimension(R.styleable.RetroShapeableImageView_retroCornerSize, 0f);
-        updateCornerSize(cornerSize)
-        typedArray.recycle()
+        context.withStyledAttributes(attrs, R.styleable.RetroShapeableImageView, defStyle, -1) {
+            addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ ->
+                val radius = width / 2f
+                shapeAppearanceModel = ShapeAppearanceModel().withCornerSize(radius)
+            }
+        }
     }
 
-    fun updateCornerSize(cornerSize: Float) {
+    private fun updateCornerSize(cornerSize: Float) {
         shapeAppearanceModel = ShapeAppearanceModel.Builder()
             .setAllCorners(CornerFamily.ROUNDED, cornerSize)
             .build()

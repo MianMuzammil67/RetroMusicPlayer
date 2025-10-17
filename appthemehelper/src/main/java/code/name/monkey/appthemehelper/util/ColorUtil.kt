@@ -3,6 +3,11 @@ package code.name.monkey.appthemehelper.util
 import android.graphics.Color
 import androidx.annotation.ColorInt
 import androidx.annotation.FloatRange
+import androidx.core.graphics.ColorUtils
+import kotlin.math.abs
+import kotlin.math.max
+import kotlin.math.min
+import kotlin.math.roundToInt
 
 object ColorUtil {
     fun desaturateColor(color: Int, ratio: Float): Int {
@@ -34,12 +39,62 @@ object ColorUtil {
     }
 
     @ColorInt
+    fun darkenColorTheme(@ColorInt color: Int): Int {
+        return shiftColor(color, 0.8f)
+    }
+
+    @ColorInt
     fun lightenColor(@ColorInt color: Int): Int {
         return shiftColor(color, 1.1f)
     }
 
+    @ColorInt
+    fun lightenColor(
+        @ColorInt color: Int,
+        value: Float
+    ): Int {
+        val hsl = FloatArray(3)
+        ColorUtils.colorToHSL(color, hsl)
+        hsl[2] += value
+        hsl[2] = hsl[2].coerceIn(0f, 1f)
+        return ColorUtils.HSLToColor(hsl)
+    }
+
+    @ColorInt
+    fun darkenColor(
+        @ColorInt color: Int,
+        value: Float
+    ): Int {
+        val hsl = FloatArray(3)
+        ColorUtils.colorToHSL(color, hsl)
+        hsl[2] -= value
+        hsl[2] = hsl[2].coerceIn(0f, 1f)
+        return ColorUtils.HSLToColor(hsl)
+    }
+
+    @ColorInt
+    fun getReadableColorLight(@ColorInt color: Int, @ColorInt bgColor: Int): Int {
+        var foregroundColor = color
+        while (ColorUtils.calculateContrast(foregroundColor, bgColor) <= 3.0
+        ) {
+            foregroundColor = darkenColor(foregroundColor, 0.1F)
+        }
+        return foregroundColor
+    }
+
+    @ColorInt
+    fun getReadableColorDark(@ColorInt color: Int, @ColorInt bgColor: Int): Int {
+        var foregroundColor = color
+        while (ColorUtils.calculateContrast(foregroundColor, bgColor) <= 3.0
+        ) {
+            foregroundColor = lightenColor(foregroundColor, 0.1F)
+        }
+        return foregroundColor
+    }
+
     fun isColorLight(@ColorInt color: Int): Boolean {
-        val darkness = 1 - (0.299 * Color.red(color) + 0.587 * Color.green(color) + 0.114 * Color.blue(color)) / 255
+        val darkness =
+            1 - (0.299 * Color.red(color) + 0.587 * Color.green(color) + 0.114 * Color.blue(color)) / 255
         return darkness < 0.4
     }
 
@@ -53,7 +108,7 @@ object ColorUtil {
 
     @ColorInt
     fun adjustAlpha(@ColorInt color: Int, @FloatRange(from = 0.0, to = 1.0) factor: Float): Int {
-        val alpha = Math.round(Color.alpha(color) * factor)
+        val alpha = (Color.alpha(color) * factor).roundToInt()
         val red = Color.red(color)
         val green = Color.green(color)
         val blue = Color.blue(color)
@@ -62,7 +117,7 @@ object ColorUtil {
 
     @ColorInt
     fun withAlpha(@ColorInt baseColor: Int, @FloatRange(from = 0.0, to = 1.0) alpha: Float): Int {
-        val a = Math.min(255, Math.max(0, (alpha * 255).toInt())) shl 24
+        val a = min(255, max(0, (alpha * 255).toInt())) shl 24
         val rgb = 0x00ffffff and baseColor
         return a + rgb
     }
@@ -94,9 +149,15 @@ object ColorUtil {
     }
 
     fun isColorSaturated(@ColorInt color: Int): Boolean {
-        val max = Math.max(0.299 * Color.red(color), Math.max(0.587 * Color.green(color), 0.114 * Color.blue(color)))
-        val min = Math.min(0.299 * Color.red(color), Math.min(0.587 * Color.green(color), 0.114 * Color.blue(color)))
-        val diff = Math.abs(max - min)
+        val max = max(
+            0.299 * Color.red(color),
+            max(0.587 * Color.green(color), 0.114 * Color.blue(color))
+        )
+        val min = min(
+            0.299 * Color.red(color),
+            min(0.587 * Color.green(color), 0.114 * Color.blue(color))
+        )
+        val diff = abs(max - min)
         return diff > 20
     }
 
@@ -109,10 +170,10 @@ object ColorUtil {
         )
     }
 
-    fun getDifference(@ColorInt color1: Int, @ColorInt color2: Int): Double {
-        var diff = Math.abs(0.299 * (Color.red(color1) - Color.red(color2)))
-        diff += Math.abs(0.587 * (Color.green(color1) - Color.green(color2)))
-        diff += Math.abs(0.114 * (Color.blue(color1) - Color.blue(color2)))
+    private fun getDifference(@ColorInt color1: Int, @ColorInt color2: Int): Double {
+        var diff = abs(0.299 * (Color.red(color1) - Color.red(color2)))
+        diff += abs(0.587 * (Color.green(color1) - Color.green(color2)))
+        diff += abs(0.114 * (Color.blue(color1) - Color.blue(color2)))
         return diff
     }
 
@@ -122,12 +183,17 @@ object ColorUtil {
     }
 
     @ColorInt
-    fun getReadableText(@ColorInt textColor: Int, @ColorInt backgroundColor: Int, difference: Int): Int {
+    fun getReadableText(
+        @ColorInt textColor: Int,
+        @ColorInt backgroundColor: Int,
+        difference: Int
+    ): Int {
         var textColorFinal = textColor
         val isLight = isColorLight(backgroundColor)
         var i = 0
         while (getDifference(textColorFinal, backgroundColor) < difference && i < 100) {
-            textColorFinal = getMixedColor(textColorFinal, if (isLight) Color.BLACK else Color.WHITE)
+            textColorFinal =
+                getMixedColor(textColorFinal, if (isLight) Color.BLACK else Color.WHITE)
             i++
         }
 
@@ -137,7 +203,8 @@ object ColorUtil {
     @ColorInt
     fun getContrastColor(@ColorInt color: Int): Int {
         // Counting the perceptive luminance - human eye favors green color...
-        val a = 1 - (0.299 * Color.red(color) + 0.587 * Color.green(color) + 0.114 * Color.blue(color)) / 255
+        val a =
+            1 - (0.299 * Color.red(color) + 0.587 * Color.green(color) + 0.114 * Color.blue(color)) / 255
         return if (a < 0.5) Color.BLACK else Color.WHITE
     }
 }

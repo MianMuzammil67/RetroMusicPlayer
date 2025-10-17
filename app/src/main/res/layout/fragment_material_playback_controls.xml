@@ -2,7 +2,6 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/playback_controls"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:gravity="center_vertical"
@@ -21,26 +20,25 @@
         app:layout_constraintBottom_toBottomOf="@+id/progressSlider"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="@id/progressSlider"
-        tools:ignore="RtlHardcoded,RtlSymmetry"
-        tools:text="00:22" />
+        tools:text="@tools:sample/date/hhmmss" />
 
     <com.google.android.material.slider.Slider
         android:id="@+id/progressSlider"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        app:labelBehavior="gone"
+        android:maxHeight="2dp"
+        style="@style/Widget.Retro.Slider"
+        android:progressDrawable="@drawable/color_progress_seek"
         app:layout_constraintEnd_toStartOf="@id/songTotalTime"
         app:layout_constraintStart_toEndOf="@id/songCurrentProgress"
         app:layout_constraintTop_toTopOf="parent"
-        app:thumbRadius="@dimen/slider_thumb_radius"
-        app:trackHeight="@dimen/slider_track_height"
         tools:ignore="RtlHardcoded,UnusedAttribute"
         tools:progress="20" />
 
     <com.google.android.material.textview.MaterialTextView
         android:id="@+id/songTotalTime"
-        android:layout_width="40dp"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="16dp"
         android:gravity="center"
@@ -50,43 +48,35 @@
         app:layout_constraintBottom_toBottomOf="@+id/progressSlider"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="@id/progressSlider"
-        tools:ignore="RtlHardcoded,RtlSymmetry"
-        tools:text="00:22" />
+        tools:text="@tools:sample/date/hhmmss" />
 
-    <LinearLayout
-        android:id="@+id/titleContainer"
+    <com.google.android.material.textview.MaterialTextView
+        android:id="@+id/title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:ellipsize="marquee"
+        android:focusable="true"
+        android:freezesText="true"
+        android:gravity="center"
+        android:marqueeRepeatLimit="marquee_forever"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:scrollHorizontally="true"
+        android:singleLine="true"
+        android:textAppearance="@style/TextViewHeadline6"
+        android:textColor="?android:attr/textColorPrimary"
+        android:textStyle="bold"
         app:layout_constraintBottom_toTopOf="@+id/text"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/progressSlider">
-
-        <com.google.android.material.textview.MaterialTextView
-            android:id="@+id/title"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:ellipsize="marquee"
-            android:focusable="true"
-            android:focusableInTouchMode="true"
-            android:freezesText="true"
-            android:gravity="center"
-            android:marqueeRepeatLimit="marquee_forever"
-            android:paddingStart="16dp"
-            android:paddingEnd="16dp"
-            android:scrollHorizontally="true"
-            android:singleLine="true"
-            android:textAppearance="@style/TextViewHeadline6"
-            android:textColor="?android:attr/textColorPrimary"
-            android:textStyle="bold"
-            tools:text="@tools:sample/lorem/random" />
-    </LinearLayout>
+        app:layout_constraintTop_toBottomOf="@+id/progressSlider"
+        tools:text="@tools:sample/lorem/random" />
 
     <com.google.android.material.textview.MaterialTextView
         android:id="@+id/text"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:ellipsize="end"
@@ -99,7 +89,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/titleContainer"
+        app:layout_constraintTop_toBottomOf="@+id/title"
         tools:text="@tools:sample/lorem/random" />
 
     <com.google.android.material.textview.MaterialTextView
@@ -130,7 +120,7 @@
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="@+id/previousButton"
-        app:srcCompat="@drawable/ic_repeat_white_24dp"
+        app:srcCompat="@drawable/ic_repeat"
         tools:ignore="MissingPrefix"
         tools:tint="@color/md_black_1000" />
 
@@ -146,7 +136,7 @@
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toEndOf="@+id/repeatButton"
         app:layout_constraintTop_toTopOf="@+id/playPauseButton"
-        app:srcCompat="@drawable/ic_skip_previous_white_24dp"
+        app:srcCompat="@drawable/ic_skip_previous_outline"
         tools:ignore="MissingPrefix"
         tools:tint="@color/md_black_1000" />
 
@@ -160,7 +150,7 @@
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toEndOf="@+id/previousButton"
         app:layout_constraintTop_toBottomOf="@+id/songInfo"
-        app:srcCompat="@drawable/ic_pause_white_64dp"
+        app:srcCompat="@drawable/ic_pause_outline"
         tools:tint="@color/md_black_1000" />
 
     <androidx.appcompat.widget.AppCompatImageButton
@@ -175,7 +165,7 @@
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toEndOf="@+id/playPauseButton"
         app:layout_constraintTop_toTopOf="@+id/playPauseButton"
-        app:srcCompat="@drawable/ic_skip_next_white_24dp"
+        app:srcCompat="@drawable/ic_skip_next_outline"
         tools:ignore="MissingPrefix"
         tools:tint="@color/md_black_1000" />
 
@@ -190,10 +180,9 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/nextButton"
         app:layout_constraintTop_toTopOf="@+id/nextButton"
-        app:srcCompat="@drawable/ic_shuffle_white_24dp"
+        app:srcCompat="@drawable/ic_shuffle"
         tools:ignore="MissingPrefix"
         tools:tint="@color/md_black_1000" />
-
 
     <FrameLayout
         android:id="@+id/volumeFragmentContainer"

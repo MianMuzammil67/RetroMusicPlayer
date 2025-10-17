@@ -14,16 +14,13 @@
 
 package code.name.monkey.retromusic.model
 
-import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
-import code.name.monkey.retromusic.adapter.HomeAdapter.Companion.HomeSection
+import code.name.monkey.retromusic.HomeSection
 
-class Home(
-    val priority: Int,
-    @StringRes val title: Int,
-    val arrayList: ArrayList<*>,
+data class Home(
+    val arrayList: List<Any>,
     @HomeSection
     val homeSection: Int,
-    @DrawableRes
-    val icon: Int
+    @StringRes
+    val titleRes: Int
 )

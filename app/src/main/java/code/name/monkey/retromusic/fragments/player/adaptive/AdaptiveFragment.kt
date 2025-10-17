@@ -1,151 +1,56 @@
+/*
+ * Copyright (c) 2020 Hemanth Savarla.
+ *
+ * Licensed under the GNU General Public License v3
+ *
+ * This is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU General Public License for more details.
+ *
+ */
 package code.name.monkey.retromusic.fragments.player.adaptive
 
 import android.os.Bundle
-import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
-import android.widget.FrameLayout
-import android.widget.TextView
 import androidx.appcompat.widget.Toolbar
-import code.name.monkey.appthemehelper.util.ATHUtil
 import code.name.monkey.appthemehelper.util.ToolbarContentTintHelper
 import code.name.monkey.retromusic.R
-import code.name.monkey.retromusic.extensions.textColorPrimary
-import code.name.monkey.retromusic.extensions.textColorSecondary
+import code.name.monkey.retromusic.databinding.FragmentAdaptivePlayerBinding
+import code.name.monkey.retromusic.extensions.*
 import code.name.monkey.retromusic.fragments.base.AbsPlayerFragment
 import code.name.monkey.retromusic.fragments.player.PlayerAlbumCoverFragment
 import code.name.monkey.retromusic.helper.MusicPlayerRemote
-import code.name.monkey.retromusic.helper.MusicProgressViewUpdateHelper
 import code.name.monkey.retromusic.model.Song
-import code.name.monkey.retromusic.model.lyrics.AbsSynchronizedLyrics
-import code.name.monkey.retromusic.model.lyrics.Lyrics
-import kotlinx.android.synthetic.main.fragment_adaptive_player.*
+import code.name.monkey.retromusic.util.color.MediaNotificationProcessor
 
-class AdaptiveFragment : AbsPlayerFragment(), MusicProgressViewUpdateHelper.Callback {
+class AdaptiveFragment : AbsPlayerFragment(R.layout.fragment_adaptive_player) {
 
-    private lateinit var lyricsLayout: FrameLayout
-    private lateinit var lyricsLine1: TextView
-    private lateinit var lyricsLine2: TextView
-
-    private var lyrics: Lyrics? = null
-    private lateinit var progressViewUpdateHelper: MusicProgressViewUpdateHelper
-
-    override fun onUpdateProgressViews(progress: Int, total: Int) {
-        if (!isLyricsLayoutBound()) return
-
-        if (!isLyricsLayoutVisible()) {
-            hideLyricsLayout()
-            return
-        }
-
-        if (lyrics !is AbsSynchronizedLyrics) return
-        val synchronizedLyrics = lyrics as AbsSynchronizedLyrics
-
-        lyricsLayout.visibility = View.VISIBLE
-        lyricsLayout.alpha = 1f
-
-        val oldLine = lyricsLine2.text.toString()
-        val line = synchronizedLyrics.getLine(progress)
-
-        if (oldLine != line || oldLine.isEmpty()) {
-            lyricsLine1.text = oldLine
-            lyricsLine2.text = line
-
-            lyricsLine1.visibility = View.VISIBLE
-            lyricsLine2.visibility = View.VISIBLE
-
-            lyricsLine2.measure(
-                View.MeasureSpec.makeMeasureSpec(
-                    lyricsLine2.measuredWidth,
-                    View.MeasureSpec.EXACTLY
-                ),
-                View.MeasureSpec.UNSPECIFIED
-            )
-            val h: Float = lyricsLine2.measuredHeight.toFloat()
-
-            lyricsLine1.alpha = 1f
-            lyricsLine1.translationY = 0f
-            lyricsLine1.animate().alpha(0f).translationY(-h).duration = VISIBILITY_ANIM_DURATION
-
-            lyricsLine2.alpha = 0f
-            lyricsLine2.translationY = h
-            lyricsLine2.animate().alpha(1f).translationY(0f).duration = VISIBILITY_ANIM_DURATION
-        }
-    }
-
-    private fun isLyricsLayoutVisible(): Boolean {
-        return lyrics != null && lyrics!!.isSynchronized && lyrics!!.isValid
-    }
-
-    private fun isLyricsLayoutBound(): Boolean {
-        return lyricsLayout != null && lyricsLine1 != null && lyricsLine2 != null
-    }
-
-    private fun hideLyricsLayout() {
-        lyricsLayout.animate().alpha(0f).setDuration(VISIBILITY_ANIM_DURATION)
-            .withEndAction(Runnable {
-                if (!isLyricsLayoutBound()) return@Runnable
-                lyricsLayout.visibility = View.GONE
-                lyricsLine1.text = null
-                lyricsLine2.text = null
-            })
-    }
-
-    override fun setLyrics(l: Lyrics?) {
-        lyrics = l
-
-        if (!isLyricsLayoutBound()) return
-
-        if (!isLyricsLayoutVisible()) {
-            hideLyricsLayout()
-            return
-        }
-
-        lyricsLine1.text = null
-        lyricsLine2.text = null
-
-        lyricsLayout.visibility = View.VISIBLE
-        lyricsLayout.animate().alpha(1f).duration = VISIBILITY_ANIM_DURATION
-    }
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-        progressViewUpdateHelper.stop()
-    }
-
+    private var _binding: FragmentAdaptivePlayerBinding? = null
+    private val binding get() = _binding!!
     override fun playerToolbar(): Toolbar {
-        return playerToolbar
+        return binding.playerToolbar
     }
 
     private var lastColor: Int = 0
     private lateinit var playbackControlsFragment: AdaptivePlaybackControlsFragment
 
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View? {
-        return inflater.inflate(R.layout.fragment_adaptive_player, container, false)
-    }
-
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        lyricsLayout = view.findViewById(R.id.player_lyrics)
-        lyricsLine1 = view.findViewById(R.id.player_lyrics_line1)
-        lyricsLine2 = view.findViewById(R.id.player_lyrics_line2)
-
+        _binding = FragmentAdaptivePlayerBinding.bind(view)
         setUpSubFragments()
         setUpPlayerToolbar()
-
-        progressViewUpdateHelper = MusicProgressViewUpdateHelper(this, 500, 1000)
-        progressViewUpdateHelper.start()
+        binding.playbackControlsFragment.drawAboveSystemBars()
     }
 
     private fun setUpSubFragments() {
         playbackControlsFragment =
-            childFragmentManager.findFragmentById(R.id.playbackControlsFragment) as AdaptivePlaybackControlsFragment
+            whichFragment(R.id.playbackControlsFragment) as AdaptivePlaybackControlsFragment
         val playerAlbumCoverFragment =
-            childFragmentManager.findFragmentById(R.id.playerAlbumCoverFragment) as PlayerAlbumCoverFragment
+            whichFragment(R.id.playerAlbumCoverFragment) as PlayerAlbumCoverFragment
         playerAlbumCoverFragment.apply {
             removeSlideEffect()
             setCallbacks(this@AdaptiveFragment)
@@ -153,13 +58,12 @@ class AdaptiveFragment : AbsPlayerFragment(), MusicProgressViewUpdateHelper.Call
     }
 
     private fun setUpPlayerToolbar() {
-        val primaryColor = ATHUtil.resolveColor(requireContext(), R.attr.colorPrimary)
-        playerToolbar.apply {
+        binding.playerToolbar.apply {
             inflateMenu(R.menu.menu_player)
-            setNavigationOnClickListener { requireActivity().onBackPressed() }
-            ToolbarContentTintHelper.colorizeToolbar(this, primaryColor, requireActivity())
-            setTitleTextColor(textColorPrimary(requireContext()))
-            setSubtitleTextColor(textColorSecondary(requireContext()))
+            setNavigationOnClickListener { requireActivity().onBackPressedDispatcher.onBackPressed() }
+            ToolbarContentTintHelper.colorizeToolbar(this, surfaceColor(), requireActivity())
+            setTitleTextColor(textColorPrimary())
+            setSubtitleTextColor(textColorSecondary())
             setOnMenuItemClickListener(this@AdaptiveFragment)
         }
     }
@@ -177,7 +81,7 @@ class AdaptiveFragment : AbsPlayerFragment(), MusicProgressViewUpdateHelper.Call
 
     private fun updateSong() {
         val song = MusicPlayerRemote.currentSong
-        playerToolbar.apply {
+        binding.playerToolbar.apply {
             title = song.title
             subtitle = song.artistName
         }
@@ -194,32 +98,30 @@ class AdaptiveFragment : AbsPlayerFragment(), MusicProgressViewUpdateHelper.Call
         toggleFavorite(MusicPlayerRemote.currentSong)
     }
 
-    override fun onColorChanged(color: Int) {
-        playbackControlsFragment.setDark(color)
-        lastColor = color
-        callbacks?.onPaletteColorChanged()
+    override fun onColorChanged(color: MediaNotificationProcessor) {
+        playbackControlsFragment.setColor(color)
+        lastColor = color.primaryTextColor
+        libraryViewModel.updateColor(color.primaryTextColor)
         ToolbarContentTintHelper.colorizeToolbar(
-            playerToolbar,
-            ATHUtil.resolveColor(requireContext(), R.attr.colorControlNormal),
+            binding.playerToolbar,
+            colorControlNormal(),
             requireActivity()
         )
     }
 
     override fun onShow() {
-        playbackControlsFragment.show()
     }
 
     override fun onHide() {
-        playbackControlsFragment.hide()
-        onBackPressed()
     }
 
-    override fun onBackPressed(): Boolean {
-        return false
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 
     override fun toolbarIconColor(): Int {
-        return ATHUtil.resolveColor(requireContext(), R.attr.colorControlNormal)
+        return colorControlNormal()
     }
 
     override val paletteColor: Int

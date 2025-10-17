@@ -1,17 +1,17 @@
 /*
- * Copyright (c) 2019 Hemanth Savarala.
+ * Copyright (c) 2020 Hemanth Savarla.
  *
  * Licensed under the GNU General Public License v3
  *
- * This is free software: you can redistribute it and/or modify it under
- * the terms of the GNU General Public License as published by
- *  the Free Software Foundation either version 3 of the License, or (at your option) any later version.
+ * This is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
  *
  * This software is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
+ *
  */
-
 package code.name.monkey.retromusic.fragments.settings
 
 import android.content.SharedPreferences
@@ -19,9 +19,8 @@ import android.os.Bundle
 import android.view.View
 import androidx.preference.Preference
 import androidx.preference.TwoStatePreference
-import code.name.monkey.retromusic.App
-import code.name.monkey.retromusic.R
-import code.name.monkey.retromusic.util.PreferenceUtil.*
+import code.name.monkey.retromusic.*
+import code.name.monkey.retromusic.util.PreferenceUtil
 
 /**
  * @author Hemanth S (h4h13).
@@ -34,8 +33,8 @@ class NowPlayingSettingsFragment : AbsSettingsFragment(),
         updateNowPlayingScreenSummary()
         updateAlbumCoverStyleSummary()
 
-        val carouselEffect: TwoStatePreference = findPreference("carousel_effect")!!
-        carouselEffect.setOnPreferenceChangeListener { _, newValue ->
+        val carouselEffect: TwoStatePreference? = findPreference(CAROUSEL_EFFECT)
+        carouselEffect?.setOnPreferenceChangeListener { _, newValue ->
             if (newValue as Boolean && !App.isProVersion()) {
                 showProToastAndNavigate(getString(R.string.pref_title_toggle_carousel_effect))
                 return@setOnPreferenceChangeListener false
@@ -49,28 +48,31 @@ class NowPlayingSettingsFragment : AbsSettingsFragment(),
     }
 
     private fun updateAlbumCoverStyleSummary() {
-        val preference: Preference = findPreference(ALBUM_COVER_STYLE)!!
-        preference.setSummary(getInstance(requireContext()).albumCoverStyle.titleRes)
+        val preference: Preference? = findPreference(ALBUM_COVER_STYLE)
+        preference?.setSummary(PreferenceUtil.albumCoverStyle.titleRes)
     }
 
     private fun updateNowPlayingScreenSummary() {
-        val preference: Preference = findPreference(NOW_PLAYING_SCREEN_ID)!!
-        preference.setSummary(getInstance(requireContext()).nowPlayingScreen.titleRes)
+        val preference: Preference? = findPreference(NOW_PLAYING_SCREEN_ID)
+        preference?.setSummary(PreferenceUtil.nowPlayingScreen.titleRes)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        getInstance(requireContext()).registerOnSharedPreferenceChangedListener(this)
-        val preference: Preference = findPreference("album_cover_transform")!!
-        setSummary(preference)
+        PreferenceUtil.registerOnSharedPreferenceChangedListener(this)
+        val preference: Preference? = findPreference(ALBUM_COVER_TRANSFORM)
+        preference?.setOnPreferenceChangeListener { albumPrefs, newValue ->
+            setSummary(albumPrefs, newValue)
+            true
+        }
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
-        getInstance(requireContext()).unregisterOnSharedPreferenceChangedListener(this)
+        PreferenceUtil.unregisterOnSharedPreferenceChangedListener(this)
     }
 
-    override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences, key: String) {
+    override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences, key: String?) {
         when (key) {
             NOW_PLAYING_SCREEN_ID -> updateNowPlayingScreenSummary()
             ALBUM_COVER_STYLE -> updateAlbumCoverStyleSummary()

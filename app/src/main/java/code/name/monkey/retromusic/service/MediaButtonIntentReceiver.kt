@@ -15,19 +15,26 @@
 
 package code.name.monkey.retromusic.service
 
-import android.annotation.SuppressLint
-import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.os.Handler
+import android.os.Looper
 import android.os.Message
 import android.os.PowerManager
 import android.os.PowerManager.WakeLock
 import android.util.Log
 import android.view.KeyEvent
 import androidx.core.content.ContextCompat
+import androidx.core.content.getSystemService
+import androidx.core.os.BundleCompat
+import androidx.media.session.MediaButtonReceiver
 import code.name.monkey.retromusic.BuildConfig
-import code.name.monkey.retromusic.service.MusicService.*
+import code.name.monkey.retromusic.service.MusicService.Companion.ACTION_PAUSE
+import code.name.monkey.retromusic.service.MusicService.Companion.ACTION_PLAY
+import code.name.monkey.retromusic.service.MusicService.Companion.ACTION_REWIND
+import code.name.monkey.retromusic.service.MusicService.Companion.ACTION_SKIP
+import code.name.monkey.retromusic.service.MusicService.Companion.ACTION_STOP
+import code.name.monkey.retromusic.service.MusicService.Companion.ACTION_TOGGLE_PAUSE
 
 
 /**
@@ -36,7 +43,7 @@ import code.name.monkey.retromusic.service.MusicService.*
  * Double press: actionNext track
  * Triple press: previous track
  */
-class MediaButtonIntentReceiver : BroadcastReceiver() {
+class MediaButtonIntentReceiver : MediaButtonReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
         if (DEBUG) Log.v(TAG, "Received intent: $intent")
@@ -56,21 +63,19 @@ class MediaButtonIntentReceiver : BroadcastReceiver() {
         private var mClickCounter = 0
         private var mLastClickTime: Long = 0
 
-        @SuppressLint("HandlerLeak") // false alarm, handler is already static
-        private val mHandler = object : Handler() {
+        private val mHandler = object : Handler(Looper.getMainLooper()) {
 
             override fun handleMessage(msg: Message) {
                 when (msg.what) {
                     MSG_HEADSET_DOUBLE_CLICK_TIMEOUT -> {
                         val clickCount = msg.arg1
-                        val command: String?
 
                         if (DEBUG) Log.v(TAG, "Handling headset click, count = $clickCount")
-                        when (clickCount) {
-                            1 -> command = ACTION_TOGGLE_PAUSE
-                            2 -> command = ACTION_SKIP
-                            3 -> command = ACTION_REWIND
-                            else -> command = null
+                        val command = when (clickCount) {
+                            1 -> ACTION_TOGGLE_PAUSE
+                            2 -> ACTION_SKIP
+                            3 -> ACTION_REWIND
+                            else -> null
                         }
 
                         if (command != null) {
@@ -84,9 +89,10 @@ class MediaButtonIntentReceiver : BroadcastReceiver() {
         }
 
         fun handleIntent(context: Context, intent: Intent): Boolean {
+            println("Intent Action: ${intent.action}")
             val intentAction = intent.action
             if (Intent.ACTION_MEDIA_BUTTON == intentAction) {
-                val event = intent.getParcelableExtra<KeyEvent>(Intent.EXTRA_KEY_EVENT)
+                val event = intent.extras?.let { BundleCompat.getParcelable(it, Intent.EXTRA_KEY_EVENT, KeyEvent::class.java) }
                     ?: return false
 
                 val keycode = event.keyCode
@@ -101,6 +107,7 @@ class MediaButtonIntentReceiver : BroadcastReceiver() {
                     KeyEvent.KEYCODE_MEDIA_STOP -> command = ACTION_STOP
                     KeyEvent.KEYCODE_HEADSETHOOK, KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE -> command =
                         ACTION_TOGGLE_PAUSE
+
                     KeyEvent.KEYCODE_MEDIA_NEXT -> command = ACTION_SKIP
                     KeyEvent.KEYCODE_MEDIA_PREVIOUS -> command = ACTION_REWIND
                     KeyEvent.KEYCODE_MEDIA_PAUSE -> command = ACTION_PAUSE
@@ -150,14 +157,8 @@ class MediaButtonIntentReceiver : BroadcastReceiver() {
             val intent = Intent(context, MusicService::class.java)
             intent.action = command
             try {
-                // IMPORTANT NOTE: (kind of a hack)
-                // on Android O and above the following crashes when the app is not running
-                // there is no good way to check whether the app is running so we catch the exception
-                // we do not always want to use startForegroundService() because then one gets an ANR
-                // if no notification is displayed via startForeground()
-                // according to Play analytics this happens a lot, I suppose for example if command = PAUSE
                 context.startService(intent)
-            } catch (ignored: IllegalStateException) {
+            } catch (e: Exception) {
                 ContextCompat.startForegroundService(context, intent)
             }
         }
@@ -165,8 +166,8 @@ class MediaButtonIntentReceiver : BroadcastReceiver() {
         private fun acquireWakeLockAndSendMessage(context: Context, msg: Message, delay: Long) {
             if (wakeLock == null) {
                 val appContext = context.applicationContext
-                val pm = appContext.getSystemService(Context.POWER_SERVICE) as PowerManager
-                wakeLock = pm.newWakeLock(
+                val pm = appContext.getSystemService<PowerManager>()
+                wakeLock = pm?.newWakeLock(
                     PowerManager.PARTIAL_WAKE_LOCK,
                     "RetroMusicApp:Wakelock headset button"
                 )

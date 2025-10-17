@@ -2,7 +2,7 @@
 # By default, the flags in this file are appended to flags specified
 # in /Users/hemanths/Library/Android/sdk/tools/proguard/proguard-android.txt
 # You can edit the include path and order by changing the proguardFiles
-# directive in build.gradle.
+# directive in build.gradle.kts.
 #
 # For more details, see
 #   http://developer.android.com/guide/developing/tools/proguard.html
@@ -16,9 +16,9 @@
 #   public *;
 #}
 
-# Uncomment this to preserve the line number information for
+# Preserve the line number information for
 # debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
+-keepattributes SourceFile,LineNumberTable
 
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
@@ -26,45 +26,54 @@
 
 -dontwarn java.lang.invoke.*
 -dontwarn **$$Lambda$*
+-dontwarn javax.annotation.**
 
 # RetroFit
 -dontwarn retrofit.**
 -keep class retrofit.** { *; }
--keepattributes Signature
--keepattributes Exceptions
--dontwarn javax.annotation.**
+-keep,allowobfuscation,allowshrinking interface retrofit2.Call
+-keep,allowobfuscation,allowshrinking class retrofit2.Response
+-keep,allowobfuscation,allowshrinking class kotlin.coroutines.Continuation
 
 # Glide
 -keep public class * implements com.bumptech.glide.module.GlideModule
--keep public enum com.bumptech.glide.load.resource.bitmap.ImageHeaderParser$** {
-    **[] $VALUES;
-    public *;
+-keep class * extends com.bumptech.glide.module.AppGlideModule {
+ <init>(...);
+}
+-keep public enum com.bumptech.glide.load.ImageHeaderParser$** {
+  **[] $VALUES;
+  public *;
+}
+-keep class com.bumptech.glide.load.data.ParcelFileDescriptorRewinder$InternalRewinder {
+  *** rewind();
 }
 
--keep class !android.support.v7.internal.view.menu.**,** {*;}
+# OkHttp
+-keepattributes Signature
+-keepattributes *Annotation*
+-keep interface com.squareup.okhttp3.** { *; }
+-dontwarn com.squareup.okhttp3.**
 
--dontwarn
--ignorewarnings
+#-dontwarn
+#-ignorewarnings
 
--keep public class android.support.design.widget.BottomNavigationView { *; }
--keep public class android.support.design.internal.BottomNavigationMenuView { *; }
--keep public class android.support.design.internal.BottomNavigationPresenter { *; }
--keep public class android.support.design.internal.BottomNavigationItemView { *; }
+#Jaudiotagger
+-dontwarn org.jaudiotagger.**
+-dontwarn org.jcodec.**
+-keep class org.jaudiotagger.** { *; }
+-keep class org.jcodec.** { *; }
 
-#-dontwarn android.support.v8.renderscript.*
-#-keepclassmembers class android.support.v8.renderscript.RenderScript {
-#  native *** rsn*(...);
-#  native *** n*(...);
-#}
+-keepclassmembers enum * { *; }
+-keepattributes *Annotation*, Signature, Exception
+-keepnames class androidx.navigation.fragment.NavHostFragment
+-keep class * extends androidx.fragment.app.Fragment{}
+-keepnames class * extends android.os.Parcelable
+-keepnames class * extends java.io.Serializable
+-keep class code.name.monkey.retromusic.network.model.** { *; }
+-keep class code.name.monkey.retromusic.model.** { *; }
+-keep class com.google.android.material.bottomsheet.** { *; }
 
-#-keep class org.jaudiotagger.** { *; }
-
-#For cast
--keep class code.name.monkey.retromusic.cast.CastOptionsProvider { *; }
--keep class android.support.** { *; }
--keep class com.google.** { *; }
--keep class java.nio.file.** { *; }
-
--obfuscationdictionary build/obfuscation-dictionary.txt
--classobfuscationdictionary build/class-dictionary.txt
--packageobfuscationdictionary build/package-dictionary.txt
+# TypeToken https://stackoverflow.com/questions/70969756/caused-by-java-lang-runtimeexception-missing-type-parameter
+-keep class com.google.gson.reflect.TypeToken
+-keep class * extends com.google.gson.reflect.TypeToken
+-keep public class * implements java.lang.reflect.Type

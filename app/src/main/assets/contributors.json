@@ -3,24 +3,42 @@
     "name": "Hemanth Savarala",
     "summary": "Lead Developer & Designer",
     "link": "https://github.com/h4h13",
-    "profile_image": "https://i.imgur.com/AoVs9oj.jpg"
+    "image": "hemanth.jpg"
   },
   {
-    "name": "Lennart Glamann",
-    "summary": "Designer",
-    "link": "https://t.me/FlixbusLennart",
-    "profile_image": "https://i.imgur.com/Q5Nsx1R.jpg"
+    "name": "Prathamesh More",
+    "summary": "Developer",
+    "link": "https://prathameshmm02.github.io",
+    "image": "pratham.jpg"
   },
   {
-    "name": "GameSpeck",
-    "summary": "Telegram group maintainer",
-    "link": "https://t.me/GameSpeck",
-    "profile_image": "https://imgur.com/B15Kb9a.jpg"
+    "name": "Thomas Möller",
+    "summary": "Developer",
+    "link": "https://github.com/tomaThomas",
+    "image": "tomaThomas.png"
+  },
+  {
+    "name": "Daksh P. Jain",
+    "summary": "Website & GitHub Maintainer",
+    "link": "https://daksh.eu.org",
+    "image": "daksh.png"
   },
   {
     "name": "Milind Goel",
-    "summary": "Github & Telegram maintainer",
-    "link": "https://t.me/MilindGoel15",
-    "profile_image": "https://i.imgur.com/Bz4De21_d.jpg"
+    "summary": "Support Representative & Moderator",
+    "link": "https://milindgoel.vercel.app",
+    "image": "milind.png"
+  },
+  {
+    "name": "Lennart Glamann",
+    "summary": "Play Store Banner & Images",
+    "link": "https://telegram.me/FlixbusLennart",
+    "image": "lenny.jpg"
+  },
+  {
+    "name": "Haythem Gataa",
+    "summary": "App Logo & Banners",
+    "link": "https://dribbble.com/haythemgataa",
+    "image": "haythem.jpg"
   }
 ]

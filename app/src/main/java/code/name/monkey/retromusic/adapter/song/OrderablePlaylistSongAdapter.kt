@@ -1,82 +1,142 @@
+/*
+ * Copyright (c) 2020 Hemanth Savarla.
+ *
+ * Licensed under the GNU General Public License v3
+ *
+ * This is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU General Public License for more details.
+ *
+ */
 package code.name.monkey.retromusic.adapter.song
 
 import android.view.MenuItem
 import android.view.View
-import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.isVisible
+import androidx.fragment.app.FragmentActivity
+import androidx.lifecycle.lifecycleScope
 import code.name.monkey.retromusic.R
-import code.name.monkey.retromusic.R.menu
-import code.name.monkey.retromusic.dialogs.RemoveFromPlaylistDialog
-import code.name.monkey.retromusic.interfaces.CabHolder
-import code.name.monkey.retromusic.model.PlaylistSong
+import code.name.monkey.retromusic.db.PlaylistEntity
+import code.name.monkey.retromusic.db.toSongEntity
+import code.name.monkey.retromusic.db.toSongsEntity
+import code.name.monkey.retromusic.dialogs.RemoveSongFromPlaylistDialog
+import code.name.monkey.retromusic.fragments.LibraryViewModel
+import code.name.monkey.retromusic.helper.MusicPlayerRemote
 import code.name.monkey.retromusic.model.Song
 import code.name.monkey.retromusic.util.ViewUtil
 import com.h6ah4i.android.widget.advrecyclerview.draggable.DraggableItemAdapter
-import com.h6ah4i.android.widget.advrecyclerview.draggable.DraggableItemViewHolder
 import com.h6ah4i.android.widget.advrecyclerview.draggable.ItemDraggableRange
-import com.h6ah4i.android.widget.advrecyclerview.draggable.annotation.DraggableItemStateFlags
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class OrderablePlaylistSongAdapter(
-    activity: AppCompatActivity,
-    dataSet: ArrayList<Song>,
+    private val playlistId: Long,
+    activity: FragmentActivity,
+    dataSet: MutableList<Song>,
     itemLayoutRes: Int,
-    cabHolder: CabHolder?,
-    private val onMoveItemListener: OnMoveItemListener?
-) : PlaylistSongAdapter(
-    activity, dataSet, itemLayoutRes, cabHolder
-), DraggableItemAdapter<OrderablePlaylistSongAdapter.ViewHolder> {
+) : SongAdapter(activity, dataSet, itemLayoutRes),
+    DraggableItemAdapter<OrderablePlaylistSongAdapter.ViewHolder> {
+
+    val libraryViewModel: LibraryViewModel by activity.viewModel()
+
+    private var filtered = false
+    private var filter: CharSequence? = null
+    private var fullDataSet: MutableList<Song>
 
     init {
-        setMultiSelectMenuRes(menu.menu_playlists_songs_selection)
+        this.setHasStableIds(true)
+        this.setMultiSelectMenuRes(R.menu.menu_playlists_songs_selection)
+        fullDataSet = dataSet.toMutableList()
+    }
+
+    override fun swapDataSet(dataSet: List<Song>) {
+        super.swapDataSet(dataSet)
+        fullDataSet = dataSet.toMutableList()
+        onFilter(filter)
+    }
+
+    override fun getItemId(position: Int): Long {
+        // requires static value, it means need to keep the same value
+        // even if the item position has been changed.
+        return dataSet[position].id
     }
 
     override fun createViewHolder(view: View): SongAdapter.ViewHolder {
         return ViewHolder(view)
     }
 
-    override fun getItemId(position: Int): Long {
-        var positionFinal = position
-        positionFinal--
+    override fun onMultipleItemAction(menuItem: MenuItem, selection: List<Song>) {
+        when (menuItem.itemId) {
+            R.id.action_remove_from_playlist -> RemoveSongFromPlaylistDialog.create(
+                selection.toSongsEntity(
+                    playlistId
+                )
+            )
+                .show(activity.supportFragmentManager, "REMOVE_FROM_PLAYLIST")
 
-        var long: Long = 0
-        if (positionFinal < 0) {
-            long = -2
-        } else {
-            if (dataSet[positionFinal] is PlaylistSong) {
-                long = (dataSet[positionFinal] as PlaylistSong).idInPlayList.toLong()
-            }
+            else -> super.onMultipleItemAction(menuItem, selection)
         }
-        return long
     }
 
-    override fun onMultipleItemAction(menuItem: MenuItem, selection: ArrayList<Song>) {
-        when (menuItem.itemId) {
-            R.id.action_remove_from_playlist -> {
-                RemoveFromPlaylistDialog.create(selection as ArrayList<PlaylistSong>)
-                    .show(activity.supportFragmentManager, "ADD_PLAYLIST")
-                return
+    inner class ViewHolder(itemView: View) : SongAdapter.ViewHolder(itemView) {
+
+        override var songMenuRes: Int
+            get() = R.menu.menu_item_playlist_song
+            set(value) {
+                super.songMenuRes = value
+            }
+
+        override fun onSongMenuItemClick(item: MenuItem): Boolean {
+            when (item.itemId) {
+                R.id.action_remove_from_playlist -> {
+                    RemoveSongFromPlaylistDialog.create(song.toSongEntity(playlistId))
+                        .show(activity.supportFragmentManager, "REMOVE_FROM_PLAYLIST")
+                    return true
+                }
+            }
+            return super.onSongMenuItemClick(item)
+        }
+
+        override fun onClick(v: View?) {
+            if (isInQuickSelectMode || !filtered) {
+                super.onClick(v)
+            } else {
+                val position = fullDataSet.indexOf(dataSet.get(layoutPosition))
+                MusicPlayerRemote.openQueueKeepShuffleMode(fullDataSet, position, true)
             }
         }
-        super.onMultipleItemAction(menuItem, selection)
+
+        init {
+            dragView?.isVisible = true
+        }
     }
 
     override fun onCheckCanStartDrag(holder: ViewHolder, position: Int, x: Int, y: Int): Boolean {
-        return onMoveItemListener != null && position > 0 && (ViewUtil.hitTest(
-            holder.dragView!!, x, y
-        ) || ViewUtil.hitTest(holder.image!!, x, y))
-    }
-
-    override fun onGetItemDraggableRange(holder: ViewHolder, position: Int): ItemDraggableRange {
-        return ItemDraggableRange(1, dataSet.size)
+        if (isInQuickSelectMode || filtered) {
+            return false
+        }
+        return ViewUtil.hitTest(holder.imageText!!, x, y) || ViewUtil.hitTest(
+            holder.dragView!!,
+            x,
+            y
+        )
     }
 
     override fun onMoveItem(fromPosition: Int, toPosition: Int) {
-        if (onMoveItemListener != null && fromPosition != toPosition) {
-            onMoveItemListener.onMoveItem(fromPosition - 1, toPosition - 1)
-        }
+        dataSet.add(toPosition, dataSet.removeAt(fromPosition))
+    }
+
+    override fun onGetItemDraggableRange(holder: ViewHolder, position: Int): ItemDraggableRange? {
+        return null
     }
 
     override fun onCheckCanDrop(draggingPosition: Int, dropPosition: Int): Boolean {
-        return dropPosition > 0
+        return true
     }
 
     override fun onItemDragStarted(position: Int) {
@@ -87,53 +147,28 @@ class OrderablePlaylistSongAdapter(
         notifyDataSetChanged()
     }
 
-    interface OnMoveItemListener {
-        fun onMoveItem(fromPosition: Int, toPosition: Int)
-    }
-
-    inner class ViewHolder(itemView: View) : PlaylistSongAdapter.ViewHolder(itemView),
-        DraggableItemViewHolder {
-        @DraggableItemStateFlags
-        private var mDragStateFlags: Int = 0
-
-        override var songMenuRes: Int
-            get() = R.menu.menu_item_playlist_song
-            set(value) {
-                super.songMenuRes = value
-            }
-
-        init {
-            if (dragView != null) {
-                if (onMoveItemListener != null) {
-                    dragView?.visibility = View.VISIBLE
-                } else {
-                    dragView?.visibility = View.GONE
-                }
-            }
-        }
-
-        override fun onSongMenuItemClick(item: MenuItem): Boolean {
-            when (item.itemId) {
-                R.id.action_remove_from_playlist -> {
-                    RemoveFromPlaylistDialog.create(song as PlaylistSong)
-                        .show(activity.supportFragmentManager, "REMOVE_FROM_PLAYLIST")
-                    return true
-                }
-            }
-            return super.onSongMenuItemClick(item)
-        }
-
-        @DraggableItemStateFlags
-        override fun getDragStateFlags(): Int {
-            return mDragStateFlags
-        }
-
-        override fun setDragStateFlags(@DraggableItemStateFlags flags: Int) {
-            mDragStateFlags = flags
+    fun saveSongs(playlistEntity: PlaylistEntity) {
+        onFilter(null)
+        activity.lifecycleScope.launch(Dispatchers.IO) {
+            libraryViewModel.insertSongs(dataSet.toSongsEntity(playlistEntity))
         }
     }
 
-    companion object {
-        val TAG: String = OrderablePlaylistSongAdapter::class.java.simpleName
+
+    fun onFilter(text: CharSequence?) {
+        filter = text
+        if (text.isNullOrEmpty()) {
+            filtered = false
+            dataSet = fullDataSet
+        } else {
+            filtered = true
+            dataSet = fullDataSet.filter { song -> song.title.contains(text, ignoreCase = true) }
+                .toMutableList()
+        }
+        notifyDataSetChanged()
+    }
+
+    fun hasSongs(): Boolean {
+        return itemCount > 0 || (filtered && fullDataSet.size > 0)
     }
 }

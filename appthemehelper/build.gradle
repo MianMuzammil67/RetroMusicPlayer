@@ -1,40 +1,33 @@
 apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
-apply plugin: 'kotlin-android-extensions'
 android {
-    compileSdkVersion 29
+    compileSdk 36
+    namespace "code.name.monkey.appthemehelper"
+
     defaultConfig {
-        minSdkVersion 21
-        targetSdkVersion 29
-        versionCode 1
-        versionName "1.0"
-
-        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-
+        minSdk 24
+        targetSdk 36
     }
     buildTypes {
         release {
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
+    lint {
+        abortOnError false
+    }
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_21
+        targetCompatibility JavaVersion.VERSION_21
+    }
+    kotlinOptions {
+        jvmTarget = "21"
     }
 }
 
 dependencies {
-    implementation fileTree(include: ['*.jar'], dir: 'libs')
-    implementation project(':fonts')
-    implementation 'androidx.appcompat:appcompat:1.1.0'
-    implementation 'com.google.android.material:material:1.2.0-alpha05'
-    implementation 'androidx.preference:preference:1.1.0'
-    implementation 'androidx.cardview:cardview:1.0.0'
-    // Used for the list preference classes
-    implementation 'com.afollestad.material-dialogs:core:3.1.1'
-    implementation 'com.afollestad.material-dialogs:input:3.1.1'
-    implementation 'com.afollestad.material-dialogs:color:3.1.1'
-    implementation 'com.afollestad.material-dialogs:bottomsheets:3.1.1'
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
+    implementation libs.androidx.appcompat
+    implementation libs.android.material
+    implementation libs.androidx.preference.ktx
 }

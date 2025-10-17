@@ -11,14 +11,12 @@
   ~ without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
   ~ See the GNU General Public License for more details.
   -->
-
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical">
-
 
     <code.name.monkey.retromusic.views.StatusBarView
         android:id="@+id/status_bar"
@@ -27,8 +25,7 @@
         android:background="?attr/colorSurface"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        tools:ignore="UnusedAttribute" />
+        app:layout_constraintTop_toTopOf="parent" />
 
     <androidx.appcompat.widget.AppCompatImageView
         android:id="@+id/image"
@@ -50,7 +47,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-
     <androidx.appcompat.widget.AppCompatImageView
         android:id="@+id/close"
         android:layout_width="52dp"
@@ -61,7 +57,19 @@
         android:padding="8dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/status_bar"
-        app:srcCompat="@drawable/ic_close_white_24dp" />
+        app:srcCompat="@drawable/ic_close" />
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:layout_width="52dp"
+        android:layout_height="52dp"
+        android:layout_margin="16dp"
+        android:background="@drawable/color_circle_gradient"
+        android:backgroundTint="@color/semi_transparent"
+        android:padding="8dp"
+        app:layout_constraintEnd_toStartOf="@id/songFavourite"
+        app:layout_constraintStart_toEndOf="@id/close"
+        app:layout_constraintTop_toBottomOf="@id/status_bar"
+        app:srcCompat="@drawable/ic_car" />
 
     <androidx.appcompat.widget.AppCompatImageView
         android:id="@+id/songFavourite"
@@ -73,7 +81,7 @@
         android:padding="8dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@id/status_bar"
-        app:srcCompat="@drawable/ic_favorite_border_white_24dp" />
+        app:srcCompat="@drawable/ic_favorite_border" />
 
     <androidx.appcompat.widget.AppCompatImageView
         android:id="@+id/playPauseButton"
@@ -81,7 +89,7 @@
         android:layout_height="112dp"
         android:layout_marginBottom="42dp"
         android:background="?roundSelector"
-        android:src="@drawable/ic_pause_white_24dp"
+        android:src="@drawable/ic_pause"
         app:layout_constraintBottom_toTopOf="@+id/repeatButton"
         app:layout_constraintEnd_toStartOf="@+id/nextButton"
         app:layout_constraintHorizontal_bias="0.5"
@@ -97,7 +105,7 @@
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toEndOf="@+id/playPauseButton"
         app:layout_constraintTop_toTopOf="@+id/playPauseButton"
-        app:srcCompat="@drawable/ic_skip_next_white_24dp" />
+        app:srcCompat="@drawable/ic_skip_next" />
 
     <androidx.appcompat.widget.AppCompatImageView
         android:id="@+id/previousButton"
@@ -109,7 +117,7 @@
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="@+id/playPauseButton"
-        app:srcCompat="@drawable/ic_skip_previous_white_24dp" />
+        app:srcCompat="@drawable/ic_skip_previous" />
 
     <androidx.appcompat.widget.AppCompatImageView
         android:id="@+id/repeatButton"
@@ -121,7 +129,7 @@
         app:layout_constraintEnd_toStartOf="@+id/shuffleButton"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
-        app:srcCompat="@drawable/ic_repeat_white_24dp" />
+        app:srcCompat="@drawable/ic_repeat" />
 
 
     <androidx.appcompat.widget.AppCompatImageView
@@ -134,7 +142,7 @@
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toEndOf="@+id/repeatButton"
         app:layout_constraintTop_toTopOf="@+id/repeatButton"
-        app:srcCompat="@drawable/ic_shuffle_white_24dp" />
+        app:srcCompat="@drawable/ic_shuffle" />
 
     <LinearLayout
         android:id="@+id/titleContainer"
@@ -152,7 +160,7 @@
             android:layout_height="wrap_content"
             android:gravity="center"
             android:maxLines="3"
-            android:textAppearance="@style/TextViewHeadline5"
+            android:textAppearance="@style/TextViewHeadline4"
             android:textColor="@color/md_white_1000"
             android:textStyle="bold"
             tools:text="@tools:sample/lorem/random" />
@@ -161,30 +169,23 @@
             android:id="@+id/songText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
+            android:layout_marginTop="8dp"
             android:gravity="center"
             android:maxLines="3"
-            android:textAppearance="@style/TextViewHeadline6"
+            android:textAppearance="@style/TextViewHeadline5"
             android:textColor="@color/md_grey_200"
             tools:text="@tools:sample/lorem/random" />
     </LinearLayout>
 
-
-    <androidx.appcompat.widget.AppCompatSeekBar
+    <com.google.android.material.slider.Slider
         android:id="@+id/progressSlider"
-        style="@style/Widget.MaterialProgressBar.ProgressBar.Horizontal"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_weight="8"
         android:maxHeight="3dp"
-        android:progressDrawable="@drawable/color_progress_seek"
-        android:progressTint="@color/md_white_1000"
-        android:splitTrack="false"
-        android:thumb="@drawable/switch_thumb_material"
+        style="@style/Widget.Retro.Slider"
         app:layout_constraintBottom_toTopOf="@id/songCurrentProgress"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        tools:ignore="RtlHardcoded,UnusedAttribute"
         tools:progress="20" />
 
     <com.google.android.material.textview.MaterialTextView
@@ -196,8 +197,7 @@
         android:textColor="@color/md_white_1000"
         app:layout_constraintBottom_toTopOf="@id/playPauseButton"
         app:layout_constraintStart_toStartOf="parent"
-        tools:ignore="RtlHardcoded,RtlSymmetry"
-        tools:text="00:22" />
+        tools:text="@tools:sample/date/hhmmss" />
 
     <com.google.android.material.textview.MaterialTextView
         android:id="@+id/songTotalTime"
@@ -208,7 +208,6 @@
         android:textColor="@color/md_white_1000"
         app:layout_constraintBottom_toTopOf="@id/playPauseButton"
         app:layout_constraintEnd_toEndOf="parent"
-        tools:ignore="RtlHardcoded,RtlSymmetry"
-        tools:text="00:22" />
+        tools:text="@tools:sample/date/hhmmss" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

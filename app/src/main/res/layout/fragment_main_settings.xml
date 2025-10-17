@@ -1,23 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/scrollView"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:overScrollMode="never">
+    android:overScrollMode="@integer/overScrollMode">
 
     <LinearLayout
+        android:id="@+id/container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:paddingBottom="@dimen/mini_player_height">
 
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/buyProContainer"
+            style="@style/MaterialCardViewStroke"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_margin="4dp"
-            app:cardCornerRadius="8dp"
-            app:cardUseCompatPadding="true">
+            app:cardCornerRadius="8dp">
 
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="match_parent"
@@ -35,8 +38,9 @@
                     android:paddingBottom="12dp"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent"
-                    app:srcCompat="@drawable/ic_diamond_stone_white_24dp"
-                    app:tint="?colorOnSecondary" />
+                    app:srcCompat="@drawable/ic_diamond"
+                    app:tint="?colorOnSecondary"
+                    tools:tint="?attr/colorAccent" />
 
                 <com.google.android.material.textview.MaterialTextView
                     android:id="@+id/title"
@@ -47,6 +51,8 @@
                     android:text="@string/retro_music_pro"
                     android:textAppearance="@style/TextViewSubtitle1"
                     android:textStyle="bold"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toBottomOf="@id/diamondIcon" />
 
                 <com.google.android.material.textview.MaterialTextView
@@ -58,6 +64,9 @@
                     android:paddingEnd="16dp"
                     android:paddingBottom="12dp"
                     android:text="@string/pro_summary"
+                    android:textAppearance="@style/TextViewBody2"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toBottomOf="@id/title" />
 
                 <View
@@ -77,6 +86,7 @@
                     android:gravity="start|center_vertical"
                     android:text="@string/buy_now"
                     android:textAllCaps="false"
+                    android:textAppearance="@style/TextViewButton"
                     android:textColor="?colorAccent"
                     android:textStyle="bold"
                     app:backgroundTint="?attr/colorSurface"
@@ -91,7 +101,7 @@
             android:id="@+id/generalSettings"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:settingListItemIcon="@drawable/ic_theme_palette_white_24dp"
+            app:settingListItemIcon="@drawable/ic_palette"
             app:settingListItemIconColor="@color/md_blue_A400"
             app:settingListItemText="@string/general_settings_summary"
             app:settingListItemTitle="@string/general_settings_title" />
@@ -100,7 +110,7 @@
             android:id="@+id/nowPlayingSettings"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:settingListItemIcon="@drawable/ic_play_circle_filled_white_24dp"
+            app:settingListItemIcon="@drawable/ic_play_circle_filled"
             app:settingListItemIconColor="@color/md_red_A400"
             app:settingListItemText="@string/now_playing_summary"
             app:settingListItemTitle="@string/now_playing" />
@@ -109,7 +119,7 @@
             android:id="@+id/audioSettings"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:settingListItemIcon="@drawable/ic_volume_up_white_24dp"
+            app:settingListItemIcon="@drawable/ic_volume_up"
             app:settingListItemIconColor="@color/md_deep_purple_A400"
             app:settingListItemText="@string/audio_settings_summary"
             app:settingListItemTitle="@string/pref_header_audio" />
@@ -118,7 +128,7 @@
             android:id="@+id/personalizeSettings"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:settingListItemIcon="@drawable/ic_hdr_strong_white_24dp"
+            app:settingListItemIcon="@drawable/ic_hdr_strong"
             app:settingListItemIconColor="@color/md_teal_A400"
             app:settingListItemText="@string/personalize_settings_summary"
             app:settingListItemTitle="@string/personalize" />
@@ -128,35 +138,34 @@
             android:id="@+id/imageSettings"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:settingListItemIcon="@drawable/ic_image_white_24dp"
+            app:settingListItemIcon="@drawable/ic_image"
             app:settingListItemIconColor="@color/md_deep_orange_A400"
             app:settingListItemText="@string/image_settings_summary"
             app:settingListItemTitle="@string/pref_header_images" />
 
         <code.name.monkey.retromusic.views.SettingListItemView
-            android:id="@+id/notificationSettings"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            app:settingListItemIcon="@drawable/ic_notifications_active_white_24dp"
-            app:settingListItemIconColor="@color/md_yellow_A400"
-            app:settingListItemText="@string/notification_settings_summary"
-            app:settingListItemTitle="@string/notification" />
-
-        <code.name.monkey.retromusic.views.SettingListItemView
             android:id="@+id/otherSettings"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:settingListItemIcon="@drawable/ic_testing_white_24dp"
+            app:settingListItemIcon="@drawable/ic_testing"
             app:settingListItemIconColor="@color/md_indigo_A400"
             app:settingListItemText="@string/other_settings_summary"
             app:settingListItemTitle="@string/others" />
 
+        <code.name.monkey.retromusic.views.SettingListItemView
+            android:id="@+id/backup_restore_settings"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:settingListItemIcon="@drawable/ic_restore"
+            app:settingListItemIconColor="@color/md_cyan_400"
+            app:settingListItemText="@string/backup_restore_settings_summary"
+            app:settingListItemTitle="@string/backup_restore_title" />
 
         <code.name.monkey.retromusic.views.SettingListItemView
             android:id="@+id/aboutSettings"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:settingListItemIcon="@drawable/ic_info_outline_white_24dp"
+            app:settingListItemIcon="@drawable/ic_info_outline"
             app:settingListItemIconColor="@color/md_light_green_A400"
             app:settingListItemText="@string/about_settings_summary"
             app:settingListItemTitle="@string/action_about" />

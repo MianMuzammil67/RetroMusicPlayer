@@ -14,22 +14,18 @@
 
 package code.name.monkey.retromusic.model
 
-import java.util.*
+data class Album(
+    val id: Long,
+    val songs: List<Song>
+) {
 
-class Album {
-
-    val songs: ArrayList<Song>?
-
-    val id: Int
-        get() = safeGetFirstSong().albumId
-
-    val title: String?
+    val title: String
         get() = safeGetFirstSong().albumName
 
-    val artistId: Int
+    val artistId: Long
         get() = safeGetFirstSong().artistId
 
-    val artistName: String?
+    val artistName: String
         get() = safeGetFirstSong().artistName
 
     val year: Int
@@ -39,17 +35,17 @@ class Album {
         get() = safeGetFirstSong().dateModified
 
     val songCount: Int
-        get() = songs!!.size
+        get() = songs.size
 
-    constructor(songs: ArrayList<Song>) {
-        this.songs = songs
-    }
-
-    constructor() {
-        this.songs = ArrayList()
-    }
+    val albumArtist: String?
+        get() = safeGetFirstSong().albumArtist
 
     fun safeGetFirstSong(): Song {
-        return if (songs!!.isEmpty()) Song.emptySong else songs[0]
+        return songs.firstOrNull() ?: Song.emptySong
     }
+
+    companion object {
+        val empty = Album(-1, emptyList())
+    }
+
 }

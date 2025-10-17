@@ -1,22 +1,38 @@
+/*
+ * Copyright (c) 2020 Hemanth Savarla.
+ *
+ * Licensed under the GNU General Public License v3
+ *
+ * This is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU General Public License for more details.
+ *
+ */
 package code.name.monkey.retromusic.fragments.player.tiny
 
 import android.animation.AnimatorSet
 import android.animation.ObjectAnimator
-import android.os.Bundle
-import android.view.LayoutInflater
+import android.annotation.SuppressLint
+import android.content.Context
+import android.os.*
+import android.view.GestureDetector
+import android.view.MotionEvent
 import android.view.View
-import android.view.ViewGroup
 import android.view.animation.LinearInterpolator
 import androidx.appcompat.widget.Toolbar
-import code.name.monkey.appthemehelper.ThemeStore
-import code.name.monkey.appthemehelper.util.ColorUtil
-import code.name.monkey.appthemehelper.util.MaterialValueHelper
+import androidx.core.content.getSystemService
 import code.name.monkey.appthemehelper.util.ToolbarContentTintHelper
+import code.name.monkey.appthemehelper.util.VersionUtils
 import code.name.monkey.retromusic.R
-import code.name.monkey.retromusic.extensions.hide
-import code.name.monkey.retromusic.extensions.show
-import code.name.monkey.retromusic.fragments.MiniPlayerFragment
+import code.name.monkey.retromusic.databinding.FragmentTinyPlayerBinding
+import code.name.monkey.retromusic.extensions.*
 import code.name.monkey.retromusic.fragments.base.AbsPlayerFragment
+import code.name.monkey.retromusic.fragments.base.goToAlbum
+import code.name.monkey.retromusic.fragments.base.goToArtist
 import code.name.monkey.retromusic.fragments.player.PlayerAlbumCoverFragment
 import code.name.monkey.retromusic.helper.MusicPlayerRemote
 import code.name.monkey.retromusic.helper.MusicProgressViewUpdateHelper
@@ -25,91 +41,61 @@ import code.name.monkey.retromusic.model.Song
 import code.name.monkey.retromusic.util.MusicUtil
 import code.name.monkey.retromusic.util.PreferenceUtil
 import code.name.monkey.retromusic.util.ViewUtil
-import kotlinx.android.synthetic.main.fragment_tiny_player.*
+import code.name.monkey.retromusic.util.color.MediaNotificationProcessor
+import kotlin.math.abs
 
-class TinyPlayerFragment : AbsPlayerFragment(), MusicProgressViewUpdateHelper.Callback {
-    override fun onUpdateProgressViews(progress: Int, total: Int) {
-        progressBar.max = total
-
-        val animator = ObjectAnimator.ofInt(progressBar, "progress", progress)
-
-        val animatorSet = AnimatorSet()
-        animatorSet.playSequentially(animator)
-
-        animatorSet.duration = 1500
-        animatorSet.interpolator = LinearInterpolator()
-        animatorSet.start()
-
-        playerSongTotalTime.text = String.format(
-            "%s/%s", MusicUtil.getReadableDurationString(total.toLong()),
-            MusicUtil.getReadableDurationString(progress.toLong())
-        )
-    }
-
-    override fun playerToolbar(): Toolbar {
-        return playerToolbar
-    }
-
-    override fun onShow() {
-    }
-
-    override fun onHide() {
-    }
-
-    override fun onBackPressed(): Boolean {
-        return false
-    }
-
-    override fun toolbarIconColor(): Int {
-        return textColorPrimary
-    }
+class TinyPlayerFragment : AbsPlayerFragment(R.layout.fragment_tiny_player),
+    MusicProgressViewUpdateHelper.Callback {
+    private var _binding: FragmentTinyPlayerBinding? = null
+    private val binding get() = _binding!!
 
     private var lastColor: Int = 0
+    private var toolbarColor: Int = 0
+    private var isDragEnabled = false
+    lateinit var animator: ObjectAnimator
+
+    override fun playerToolbar(): Toolbar {
+        return binding.playerToolbar
+    }
+
+    override fun onShow() {}
+
+    override fun onHide() {}
+
+    override fun toolbarIconColor(): Int {
+        return toolbarColor
+    }
+
     override val paletteColor: Int
         get() = lastColor
 
-    private var textColorPrimary = 0
-    private var textColorPrimaryDisabled = 0
+    override fun onColorChanged(color: MediaNotificationProcessor) {
+        lastColor = color.backgroundColor
+        libraryViewModel.updateColor(color.backgroundColor)
+        toolbarColor = color.secondaryTextColor
+        controlsFragment.setColor(color)
 
-    override fun onColorChanged(color: Int) {
+        binding.title.setTextColor(color.primaryTextColor)
+        binding.playerSongTotalTime.setTextColor(color.primaryTextColor)
+        binding.text.setTextColor(color.secondaryTextColor)
+        binding.songInfo.setTextColor(color.secondaryTextColor)
+        ViewUtil.setProgressDrawable(binding.progressBar, color.backgroundColor)
 
-        val colorFinal = if (PreferenceUtil.getInstance(requireContext()).adaptiveColor) {
-            color
-        } else {
-            ThemeStore.accentColor(requireContext())
+        Handler(Looper.myLooper()!!).post {
+            ToolbarContentTintHelper.colorizeToolbar(
+                binding.playerToolbar,
+                color.secondaryTextColor,
+                requireActivity()
+            )
         }
-
-        if (ColorUtil.isColorLight(colorFinal)) {
-            textColorPrimary = MaterialValueHelper.getSecondaryTextColor(requireContext(), true)
-            textColorPrimaryDisabled =
-                MaterialValueHelper.getSecondaryTextColor(requireContext(), true)
-        } else {
-            textColorPrimary = MaterialValueHelper.getPrimaryTextColor(requireContext(), false)
-            textColorPrimaryDisabled =
-                MaterialValueHelper.getSecondaryTextColor(requireContext(), false)
-        }
-
-        this.lastColor = colorFinal
-
-        callbacks?.onPaletteColorChanged()
-
-        tinyPlaybackControlsFragment.setDark(colorFinal)
-
-        ViewUtil.setProgressDrawable(progressBar, colorFinal)
-
-        title.setTextColor(textColorPrimary)
-        text.setTextColor(textColorPrimaryDisabled)
-        songInfo.setTextColor(textColorPrimaryDisabled)
-        playerSongTotalTime.setTextColor(textColorPrimary)
-
-        ToolbarContentTintHelper.colorizeToolbar(playerToolbar, textColorPrimary, requireActivity())
     }
+
 
     override fun onFavoriteToggled() {
         toggleFavorite(MusicPlayerRemote.currentSong)
     }
 
-    private lateinit var tinyPlaybackControlsFragment: TinyPlaybackControlsFragment
+    private lateinit var controlsFragment: TinyPlaybackControlsFragment
     private lateinit var progressViewUpdateHelper: MusicProgressViewUpdateHelper
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -129,47 +115,47 @@ class TinyPlayerFragment : AbsPlayerFragment(), MusicProgressViewUpdateHelper.Ca
 
     private fun updateSong() {
         val song = MusicPlayerRemote.currentSong
-        title.text = song.title
-        text.text = String.format("%s \nby - %s", song.albumName, song.artistName)
+        binding.title.text = song.title
+        binding.text.text = String.format("%s \nby - %s", song.albumName, song.artistName)
 
-        if (PreferenceUtil.getInstance(requireContext()).isSongInfo) {
-            songInfo.text = getSongInfo(song)
-            songInfo.show()
+        if (PreferenceUtil.isSongInfo) {
+            binding.songInfo.text = getSongInfo(song)
+            binding.songInfo.show()
         } else {
-            songInfo.hide()
+            binding.songInfo.hide()
         }
     }
 
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View? {
-        return inflater.inflate(R.layout.fragment_tiny_player, container, false)
-    }
-
+    @SuppressLint("ClickableViewAccessibility")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        title.isSelected = true
-        progressBar.setOnClickListener(PlayPauseButtonOnClickHandler())
-        progressBar.setOnTouchListener(MiniPlayerFragment.FlingPlayBackController(requireContext()))
+        _binding = FragmentTinyPlayerBinding.bind(view)
+        binding.title.isSelected = true
+        binding.progressBar.setOnClickListener(PlayPauseButtonOnClickHandler())
+        binding.progressBar.setOnTouchListener(ProgressHelper(requireContext()))
 
         setUpPlayerToolbar()
         setUpSubFragments()
+        binding.title.setOnClickListener {
+            goToAlbum(requireActivity())
+        }
+        binding.text.setOnClickListener {
+            goToArtist(requireActivity())
+        }
+        playerToolbar().drawAboveSystemBars()
     }
 
     private fun setUpSubFragments() {
-        tinyPlaybackControlsFragment =
-            childFragmentManager.findFragmentById(R.id.playbackControlsFragment) as TinyPlaybackControlsFragment
-        val playerAlbumCoverFragment =
-            childFragmentManager.findFragmentById(R.id.playerAlbumCoverFragment) as PlayerAlbumCoverFragment
+        controlsFragment = whichFragment(R.id.playbackControlsFragment)
+        val playerAlbumCoverFragment: PlayerAlbumCoverFragment =
+            whichFragment(R.id.playerAlbumCoverFragment)
         playerAlbumCoverFragment.setCallbacks(this)
     }
 
     private fun setUpPlayerToolbar() {
-        playerToolbar.apply {
+        binding.playerToolbar.apply {
             inflateMenu(R.menu.menu_player)
-            setNavigationOnClickListener { requireActivity().onBackPressed() }
+            setNavigationOnClickListener { requireActivity().onBackPressedDispatcher.onBackPressed() }
             setOnMenuItemClickListener(this@TinyPlayerFragment)
         }
     }
@@ -189,5 +175,119 @@ class TinyPlayerFragment : AbsPlayerFragment(), MusicProgressViewUpdateHelper.Ca
     override fun onPlayingMetaChanged() {
         super.onPlayingMetaChanged()
         updateSong()
+    }
+
+    override fun onUpdateProgressViews(progress: Int, total: Int) {
+        binding.progressBar.max = total
+
+        if (isDragEnabled) {
+            binding.progressBar.progress = progress
+        } else {
+            animator = ObjectAnimator.ofInt(binding.progressBar, "progress", progress)
+
+            val animatorSet = AnimatorSet()
+            animatorSet.playSequentially(animator)
+
+            animatorSet.duration = 1500
+            animatorSet.interpolator = LinearInterpolator()
+            animatorSet.start()
+        }
+        binding.playerSongTotalTime.text = String.format(
+            "%s/%s", MusicUtil.getReadableDurationString(total.toLong()),
+            MusicUtil.getReadableDurationString(progress.toLong())
+        )
+    }
+
+    inner class ProgressHelper(context: Context) : View.OnTouchListener {
+        private var initialY: Int = 0
+        private var initialProgress = 0
+        private var progress: Int = 0
+        private val displayHeight = resources.displayMetrics.heightPixels
+        private var gestureDetector: GestureDetector
+
+        init {
+            gestureDetector = GestureDetector(context, object :
+                GestureDetector.SimpleOnGestureListener() {
+
+                override fun onLongPress(e: MotionEvent) {
+                    if (abs(e.y - initialY) <= 2) {
+                        vibrate()
+                        isDragEnabled = true
+                        binding.progressBar.parent.requestDisallowInterceptTouchEvent(true)
+                        animator.pause()
+                    }
+                    super.onLongPress(e)
+                }
+
+                override fun onFling(
+                    e1: MotionEvent?,
+                    e2: MotionEvent,
+                    velocityX: Float,
+                    velocityY: Float
+                ): Boolean {
+                    if (abs(velocityX) > abs(velocityY)) {
+                        if (velocityX < 0) {
+                            MusicPlayerRemote.playNextSong()
+                            return true
+                        } else if (velocityX > 0) {
+                            MusicPlayerRemote.playPreviousSong()
+                            return true
+                        }
+                    }
+                    return false
+                }
+            })
+        }
+
+        @SuppressLint("ClickableViewAccessibility")
+        override fun onTouch(v: View, event: MotionEvent): Boolean {
+            when (event.actionMasked) {
+                MotionEvent.ACTION_DOWN -> {
+                    initialProgress = MusicPlayerRemote.songProgressMillis
+                    initialY = event.y.toInt()
+                    progressViewUpdateHelper.stop()
+                }
+
+                MotionEvent.ACTION_UP,
+                MotionEvent.ACTION_CANCEL -> {
+                    progressViewUpdateHelper.start()
+                    if (isDragEnabled) {
+                        MusicPlayerRemote.seekTo(progress)
+                        isDragEnabled = false
+                        return true
+                    }
+                }
+
+                MotionEvent.ACTION_MOVE -> {
+                    if (isDragEnabled) {
+                        val diffY = (initialY - event.y).toInt()
+                        progress =
+                            initialProgress + diffY * (binding.progressBar.max / displayHeight) // Multiplier
+                        if (progress > 0 && progress < binding.progressBar.max) {
+                            onUpdateProgressViews(
+                                progress,
+                                MusicPlayerRemote.songDurationMillis
+                            )
+                        }
+                    }
+                }
+            }
+            return gestureDetector.onTouchEvent(event)
+        }
+
+        @Suppress("Deprecation")
+        private fun vibrate() {
+            val v = requireContext().getSystemService<Vibrator>()
+            if (VersionUtils.hasOreo()) {
+                v?.vibrate(VibrationEffect.createOneShot(10, VibrationEffect.DEFAULT_AMPLITUDE))
+            } else {
+                v?.vibrate(10)
+            }
+        }
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 }
